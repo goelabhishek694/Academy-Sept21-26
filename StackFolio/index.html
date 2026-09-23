@@ -1,104 +1,149 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Stackfolio</title>
-    </head>
-    <body>
-        <header>
-            <h1>My Developer Portfolio</h1>
-            <p>A beginner full stack developer building real projects step by step.</p>
-          </header>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stackfolio</title>
+  </head>
+  <body>
+    <header>
+      <h1>My Developer Portfolio</h1>
+      <p>
+        A beginner full stack developer building real projects step by step.
+      </p>
+    </header>
 
-          <nav>
-            <a href="#about">About</a>
-            <a href="#skills">Skills</a>
-            <a href="#projects">Projects</a>
-            <a href="#contact">Contact</a>
-          </nav>
-        
-          <main>
-          </main>
-        
-          <footer>
-            <p>Built with HTML as part of my full stack learning journey.</p>
-          </footer>
-        <div>
-            <h1>Abhishek Goel</h1>
-            <p>I am learning full stack web development.</p>
-        </div>
+    <nav>
+      <a href="#about">About</a>
+      <a href="#skills">Skills</a>
+      <a href="#projects">Projects</a>
+      <a href="#contact">Contact</a>
+    </nav>
 
-        <div>
-            <ul>
-                <li>About</li>
-                <li>Skills</li>
-                <li>Projects</li>
-            </ul>
-        </div>
+    <main>
+      <section id="contact">
+        <h2>Contact me</h2>
+        <p>
+          if you would like to discuss a project or opportunity, fill out this
+          form.
+        </p>
+        <form>
+          <label for="full-name">Full Name</label>
+          <input type="text" id="full-name" name="fullName" required />
 
-        <!-- <div>
+          <label for="email">Email Address</label>
+          <input type="email" id="email" name="email" required />
+
+          <label for="reason">Reason for Contact</label>
+          <select id="reason" name="reason" required>
+            <option value="">Select a reason</option>
+            <option value="project">Project</option>
+            <option value="job">Job</option>
+            <option value="collaboration">Collaboration</option>
+            <option value="feedback">Feedback</option>
+          </select>
+
+          <label for="message">Message</label>
+          <textarea id="message" name="message" rows="5" minlength="300" maxlength="500" required></textarea>
+
+        </form>
+      </section>
+    </main>
+
+    <footer>
+      <p>Built with HTML as part of my full stack learning journey.</p>
+    </footer>
+    <div>
+      <h1>Abhishek Goel</h1>
+      <p>I am learning full stack web development.</p>
+    </div>
+
+    <div>
+      <ul>
+        <li>About</li>
+        <li>Skills</li>
+        <li>Projects</li>
+      </ul>
+    </div>
+
+    <!-- <div>
             <h2>About Me</h2>
             <p>I am a beginner developer building small web projects as I learn HTML, CSS, and JavaScript. I enjoy turning ideas into simple, working pages and want to grow into a full stack developer.</p>
         </div> -->
-        <div id="about">About me</div>
-        <div>i am learning fulstack development</div>
+    <div id="about">About me</div>
+    <div>i am learning fulstack development</div>
 
-        <div>
-            <h2>Skills</h2>
-            <ul>
-                <li>HTML</li>
-                <li>CSS</li>
-                <li>JavaScript</li>
-                <li>Git and GitHub</li>
-                <li>Problem solving</li>
-            </ul>
-        </div>
+    <div>
+      <h2>Skills</h2>
+      <ul>
+        <li>HTML</li>
+        <li>CSS</li>
+        <li>xJavaScript</li>
+        <li>Git and GitHub</li>
+        <li>Problem solving</li>
+      </ul>
+    </div>
 
-        <div>
-            <h2>Projects</h2>
-            <p>These are practice projects I am building while I learn.</p>
-            <ul>
-                <li>StackFolio - A simple HTML developer portfolio page.</li>
-                <li>Landing Page - A basic webpage layout practice project.</li>
-                <li>To-Do List - A small JavaScript practice app for adding tasks.</li>
-            </ul>
-        </div>
+    <div>
+      <h2>Projects</h2>
+      <p>These are practice projects I am building while I learn.</p>
+      <ul>
+        <li>StackFolio - A simple HTML developer portfolio page.</li>
+        <li>Landing Page - A basic webpage layout practice project.</li>
+        <li>To-Do List - A small JavaScript practice app for adding tasks.</li>
+      </ul>
+    </div>
 
-        <div>
-            <p>Email: learner@example.com</p>
-            <p>GitHub and LinkedIn coming soon.</p>
-        </div>
+    <div>
+      <p>Email: learner@example.com</p>
+      <p>GitHub and LinkedIn coming soon.</p>
+    </div>
 
-        <div>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Mollitia autem eius eos enim qui nisi, dignissimos esse amet tenetur facilis at distinctio non dolorum doloremque blanditiis tempora explicabo consequatur aliquid.
-        </div>
+    <div>
+      Lorem ipsum dolor sit amet consectetur adipisicing elit. Mollitia autem
+      eius eos enim qui nisi, dignissimos esse amet tenetur facilis at
+      distinctio non dolorum doloremque blanditiis tempora explicabo consequatur
+      aliquid.
+    </div>
 
-        <div>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Mollitia autem eius eos enim qui nisi, dignissimos esse amet tenetur facilis at distinctio non dolorum doloremque blanditiis tempora explicabo consequatur aliquid.
-        </div>
+    <div>
+      Lorem ipsum dolor sit amet consectetur adipisicing elit. Mollitia autem
+      eius eos enim qui nisi, dignissimos esse amet tenetur facilis at
+      distinctio non dolorum doloremque blanditiis tempora explicabo consequatur
+      aliquid.
+    </div>
 
-        <div>
-            <h2 id="skills">Skills</h2>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Mollitia autem eius eos enim qui nisi, dignissimos esse amet tenetur facilis at distinctio non dolorum doloremque blanditiis tempora explicabo consequatur aliquid.
-        </div>
+    <div>
+      <h2 id="skills">Skills</h2>
+      Lorem ipsum dolor sit amet consectetur adipisicing elit. Mollitia autem
+      eius eos enim qui nisi, dignissimos esse amet tenetur facilis at
+      distinctio non dolorum doloremque blanditiis tempora explicabo consequatur
+      aliquid.
+    </div>
 
-        <div>
-            <h2 id="projects">Projects</h2>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Mollitia autem eius eos enim qui nisi, dignissimos esse amet tenetur facilis at distinctio non dolorum doloremque blanditiis tempora explicabo consequatur aliquid.
-        </div>
+    <div>
+      <h2 id="projects">Projects</h2>
+      Lorem ipsum dolor sit amet consectetur adipisicing elit. Mollitia autem
+      eius eos enim qui nisi, dignissimos esse amet tenetur facilis at
+      distinctio non dolorum doloremque blanditiis tempora explicabo consequatur
+      aliquid.
+    </div>
 
-        <div>
-            <h2 id="contact">Contact</h2>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Mollitia autem eius eos enim qui nisi, dignissimos esse amet tenetur facilis at distinctio non dolorum doloremque blanditiis tempora explicabo consequatur aliquid.
-        </div>
+    <div>
+      <h2 id="contact">Contact</h2>
+      Lorem ipsum dolor sit amet consectetur adipisicing elit. Mollitia autem
+      eius eos enim qui nisi, dignissimos esse amet tenetur facilis at
+      distinctio non dolorum doloremque blanditiis tempora explicabo consequatur
+      aliquid.
+    </div>
 
-        <div>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Mollitia autem eius eos enim qui nisi, dignissimos esse amet tenetur facilis at distinctio non dolorum doloremque blanditiis tempora explicabo consequatur aliquid.
-        </div>
-
-
-    </body>
+    <div>
+      Lorem ipsum dolor sit amet consectetur adipisicing elit. Mollitia autem
+      eius eos enim qui nisi, dignissimos esse amet tenetur facilis at
+      distinctio non dolorum doloremque blanditiis tempora explicabo consequatur
+      aliquid.
+    </div>
+  </body>
 </html>
 
 <!-- emmet shortcut -> built in vs-code/cursor explands small abbreviations into complete html code.   -->
