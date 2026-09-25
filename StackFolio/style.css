@@ -1,5 +1,62 @@
-p{
+/* p{
     color: brown;
     font-size: 30px;
     line-height: 1.5;
+}
+
+h1{
+    font-weight: bold;
+}
+
+.section-cards{
+    background-color: aqua;
+}
+
+#contact{
+    background-color: rgb(0, 255, 34);
+}
+
+h2, p {
+    font-family: Arial, Helvetica, sans-serif;
+}
+.section-cards, #contact{
+    font-size: 10px;
+}
+
+.greet{
+    color: red
+}
+
+
+#hello{
+    color: rgb(176, 195, 31);
+}
+
+h3{
+    color: aqua;
+} */
+
+body{
+    font-family: Arial, Helvetica, sans-serif;
+    color: #222222;
+    background-color: #f4f6f8
+}
+
+header,footer{
+    background-color: #1f2937;
+    color: white;
+    text-align: center;
+}
+
+h1,h2,h3{
+    color: #1f2937;
+}
+
+a{
+    color: #2563eb;
+}
+
+nav a{
+    text-decoration: none;
+    color: #1f2937;
 }
