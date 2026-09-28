@@ -35,6 +35,15 @@ h2, p {
 h3{
     color: aqua;
 } */
+* {
+    box-sizing: border-box;
+  }
+main{
+    max-width: 900px;
+    margin: 24px auto;
+    padding: 0 16px;
+}
+
 body{
     font-family: Arial, Helvetica, sans-serif;
     color: #222222;
@@ -66,4 +75,36 @@ nav a{
     border: 12px solid #dddddd;
     padding: 5px;
     margin-bottom: 28px; 
+}
+
+.box{
+    /* border: 1px solid #1f2937; */
+    width: 200px;
+}
+label{
+    display: block;
+    margin-top: 12px;
+    font-weight: bold;
+}
+
+input, select, textarea{
+    width: 100%;
+    padding:10px;
+    margin-top: 4px;
+    border: 1px solid #cccccc;
+    font: inherit;
+}
+
+fieldset{
+    margin-top: 16px;
+}
+
+button {
+    margin-top: 16px;
+    padding: 10px 16px;
+    border: none;
+    background-color: #2563eb;
+    color: white;
+    font: inherit;
+    cursor: pointer;
 }
