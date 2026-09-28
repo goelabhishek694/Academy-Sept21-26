@@ -35,17 +35,17 @@ h2, p {
 h3{
     color: aqua;
 } */
-
 body{
     font-family: Arial, Helvetica, sans-serif;
     color: #222222;
-    background-color: #f4f6f8
+    background-color: #f4f6f8;
 }
 
 header,footer{
     background-color: #1f2937;
     color: white;
     text-align: center;
+    padding: 24px;
 }
 
 h1,h2,h3{
@@ -59,4 +59,11 @@ a{
 nav a{
     text-decoration: none;
     color: #1f2937;
+}
+
+.section-cards{
+    background-color: white;
+    border: 12px solid #dddddd;
+    padding: 5px;
+    margin-bottom: 28px; 
 }
