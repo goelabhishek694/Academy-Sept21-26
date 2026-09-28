@@ -74,7 +74,9 @@ nav a{
     background-color: white;
     border: 12px solid #dddddd;
     padding: 5px;
-    margin-bottom: 28px; 
+    margin-bottom: 28px;
+    position: static;
+    top: 20px; 
 }
 
 .box{
@@ -108,3 +110,19 @@ button {
     font: inherit;
     cursor: pointer;
 }
+
+#about{
+    position: relative;
+    top: 20px;
+}
+
+#floating-contact {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    padding: 10px 14px;
+    background-color: #2563eb;
+    color: white;
+    text-decoration: none;
+  }
+  
