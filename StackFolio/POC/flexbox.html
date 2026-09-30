@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      .flex-demo {
+        background-color: aqua;
+        flex-direction: row;
+        align-items: stretch;
+        padding: 16px;
+        display: flex;
+        justify-content: flex-start;
+        /* height: 300px; */
+        gap: 10px;
+        /* row-gap: 20px;
+            column-gap: 30px; */
+      }
+
+      .flex-box {
+        background-color: salmon;
+        color: white;
+        padding: 20px 30px;
+        font-size: 20px;
+        border: 1px solid black;
+      }
+
+      .flex-demo2 {
+        display: flex;
+        gap: 16px;
+        background-color: #e2e8f0;
+        padding: 16px;
+      }
+
+      .grow-box {
+        background-color: #2563eb;
+        color: white;
+        padding: 20px;
+        font-size: 18px;
+        text-align: center;
+        flex-grow: 1;
+      }
+
+      #box-b{
+        flex-grow: 2;
+      }
+
+      #box-a{
+        flex-basis: 200px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="flex-demo">
+      <div class="flex-box">Box 1</div>
+      <div class="flex-box">Box 2</div>
+      <div class="flex-box">Box 3</div>
+      <div class="flex-box">Box 4</div>
+    </div>
+
+    <div class="flex-demo2">
+      <div class="flex-box grow-box" id="box-a">A</div>
+      <div class="flex-box grow-box" id="box-b">B</div>
+      <div class="flex-box grow-box" id="box-c">C</div>
+    </div>
+  </body>
+</html>

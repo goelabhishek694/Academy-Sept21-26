@@ -50,7 +50,7 @@ body{
     background-color: #f4f6f8;
 }
 
-header,footer{
+footer{
     background-color: #1f2937;
     color: white;
     text-align: center;
@@ -67,7 +67,12 @@ a{
 
 nav a{
     text-decoration: none;
-    color: #1f2937;
+    color: #f6f7f8;
+}
+
+nav{
+    display: flex;
+    gap:24px;
 }
 
 .section-cards{
@@ -116,6 +121,47 @@ button {
     top: 20px;
 }
 
+.about-content{
+    display: flex;
+    gap:24px;
+    align-items: center;
+}
+
+.about-avatar{
+    border-radius: 50%;
+    height: 150px;
+    width: 150px;
+}
+
+.skills-list{
+    display: flex;
+    flex-wrap: wrap;
+    gap:10px;
+    padding-left:0;
+    list-style: none;
+}
+
+.skills-list li{
+    padding: 6px 14px;
+    background-color: #e5edff;
+    border: 1px solid #c7d2fe;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.projects-grid{
+    display: flex;
+    gap:20px;
+    margin-top: 20px;
+}
+
+.projects-grid .project-card{
+    flex:1;
+    border: 1px solid #cccccc;
+    padding:16px 24px;
+}
+
+
 #floating-contact {
     position: fixed;
     right: 20px;
@@ -126,12 +172,12 @@ button {
     text-decoration: none;
   }
 
-  #skills li {
-    display: inline-block;
-    margin-right: 8px;
-    margin-bottom: 8px;
-    padding: 6px 10px;
-    background-color: #e5edff;
-    border: 1px solid #c7d2fe;
+  .site-header{
+    background-color: #1f2937;
+    color: white;
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
   

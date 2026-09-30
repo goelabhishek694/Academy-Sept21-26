@@ -14,50 +14,86 @@
     </style>
   </head>
   <body>
-    <header>
+    <header class="site-header">
       <h1 style="color: rgb(44, 174, 65);">My Developer Portfolio</h1>
+      <nav>
+        <a href="#about">About</a>
+        <a href="#skills">Skills</a>
+        <a href="#projects">Projects</a>
+        <a href="#contact">Contact</a>
+      </nav>
+    </header>
+
+    
+
+    <main>
       <p>
         A beginner full stack developer building real projects step by step.
       </p>
-    </header>
-
-    <nav>
-      <a href="#about">About</a>
-      <a href="#skills">Skills</a>
-      <a href="#projects">Projects</a>
-      <a href="#contact">Contact</a>
-    </nav>
-
-    <main>
-      <section id="about" class="section-cards">
+      <section id="about" class="section-card">
         <h2>About Me</h2>
-        <p>
-          I am a beginner developer building small web projects as I learn
-          HTML, CSS, and JavaScript. I enjoy turning ideas into simple, working
-          pages and want to grow into a full stack developer.
-        </p>
+      
+        <div class="about-content">
+          <img
+            src="https://placehold.co/150x150"
+            alt="Profile photo placeholder"
+            class="about-avatar"
+          >
+          <div class="about-text">
+            <p>
+              I am learning full stack development and building my foundations
+              step by step. I enjoy solving problems and turning ideas into
+              real projects using HTML, CSS, and JavaScript.
+            </p>
+            <p>
+              When I am not coding, I am exploring new tools, reading
+              documentation, and collaborating with other learners.
+            </p>
+          </div>
+        </div>
       </section>
+      
 
       <section id="skills" class="section-cards">
         <h2>Skills</h2>
-        <ul>
+        <ul class="skills-list">
           <li>HTML</li>
           <li>CSS</li>
           <li>JavaScript</li>
           <li>Git and GitHub</li>
           <li>Problem solving</li>
+          <li>React</li>
+          <li>Node.js</li>
+          <li>Python</li>
+          <li>SQL</li>
+          
+      
         </ul>
       </section>
 
-      <section id="projects" class="section-cards">
+      <section id="projects" class="section-card">
         <h2>Projects</h2>
-        <p>These are practice projects I am building while I learn.</p>
-        <ul>
-          <li>StackFolio - A simple HTML developer portfolio page.</li>
-          <li>Landing Page - A basic webpage layout practice project.</li>
-          <li>To-Do List - A small JavaScript practice app for adding tasks.</li>
-        </ul>
+      
+        <div class="projects-grid">
+          <article class="project-card featured-project">
+            <span class="project-status">Featured</span>
+            <h3>StackFolio</h3>
+            <p>
+              A personal portfolio page built while learning HTML and CSS.
+            </p>
+            <a href="#contact">Contact me about this project</a>
+          </article>
+      
+          <article class="project-card">
+            <h3>Weather App</h3>
+            <p>
+              A future project where I will learn APIs and JavaScript.
+            </p>
+            <a href="#contact">Ask me about this project</a>
+          </article>
+        </div>
       </section>
+      
 
       <section id="contact" class="section-cards" >
         <h2>Contact Me</h2>
