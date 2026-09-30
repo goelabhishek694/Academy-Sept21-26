@@ -1,0 +1,898 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Flexbox Only Affects Direct Children</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          "Segoe UI",
+          system-ui,
+          -apple-system,
+          sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 2rem 1rem 4rem;
+      }
+
+      h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #f472b6, #818cf8);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.25rem;
+      }
+
+      .subtitle {
+        color: #94a3b8;
+        margin-bottom: 2.5rem;
+        font-size: 1.05rem;
+        text-align: center;
+        max-width: 600px;
+        line-height: 1.6;
+      }
+
+      .subtitle code {
+        background: #1e293b;
+        padding: 0.1em 0.45em;
+        border-radius: 4px;
+        color: #facc15;
+        font-size: 0.92em;
+      }
+
+      /* ── Controls ── */
+      .controls {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 16px;
+        padding: 1.5rem 2rem;
+        width: 100%;
+        max-width: 700px;
+        margin-bottom: 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .controls h3 {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #64748b;
+        text-align: center;
+      }
+
+      .control-row {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .control-btn {
+        padding: 0.55rem 1.1rem;
+        border: 2px solid #334155;
+        border-radius: 10px;
+        background: transparent;
+        color: #94a3b8;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: "Fira Code", "Cascadia Code", monospace;
+      }
+
+      .control-btn:hover {
+        border-color: #64748b;
+        color: #e2e8f0;
+      }
+
+      .control-btn.active {
+        background: #818cf822;
+        border-color: #818cf8;
+        color: #c7d2fe;
+      }
+
+      .control-section {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+        align-items: center;
+      }
+
+      .control-section label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #64748b;
+        font-weight: 600;
+      }
+
+      .toggle-row {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+      }
+
+      /* Toggle switch */
+      .toggle {
+        position: relative;
+        width: 48px;
+        height: 26px;
+        cursor: pointer;
+      }
+
+      .toggle input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+
+      .toggle-track {
+        position: absolute;
+        inset: 0;
+        background: #334155;
+        border-radius: 13px;
+        transition: background 0.25s;
+      }
+
+      .toggle input:checked + .toggle-track {
+        background: #818cf8;
+      }
+
+      .toggle-track::after {
+        content: "";
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 20px;
+        height: 20px;
+        background: #fff;
+        border-radius: 50%;
+        transition: transform 0.25s;
+      }
+
+      .toggle input:checked + .toggle-track::after {
+        transform: translateX(22px);
+      }
+
+      .toggle-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #94a3b8;
+        min-width: 28px;
+      }
+
+      /* ── Demo Area ── */
+      .demo-area {
+        width: 100%;
+        max-width: 700px;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+
+      /* ── The Flex Parent ── */
+      .flex-parent {
+        border: 3px solid #818cf8;
+        border-radius: 14px;
+        padding: 16px;
+        min-height: 200px;
+        transition: all 0.4s ease;
+        position: relative;
+        background: #1e293b;
+      }
+
+      .flex-parent.is-flex {
+        display: flex;
+      }
+
+      .flex-parent.is-block {
+        display: block;
+      }
+
+      /* Parent label */
+      .parent-tag {
+        position: absolute;
+        top: -13px;
+        left: 16px;
+        background: #818cf8;
+        color: #1e1b4b;
+        font-size: 0.65rem;
+        font-weight: 800;
+        padding: 0.15em 0.6em;
+        border-radius: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        z-index: 2;
+        transition: all 0.3s;
+      }
+
+      .parent-display-label {
+        position: absolute;
+        top: -13px;
+        right: 16px;
+        background: #0f172a;
+        border: 1px solid #818cf8;
+        color: #818cf8;
+        font-size: 0.6rem;
+        font-weight: 700;
+        padding: 0.15em 0.55em;
+        border-radius: 4px;
+        font-family: "Fira Code", monospace;
+        transition: all 0.3s;
+      }
+
+      /* ── Direct Children ── */
+      .child {
+        border: 2px solid #f472b6;
+        border-radius: 10px;
+        padding: 12px;
+        margin: 6px;
+        min-width: 90px;
+        min-height: 60px;
+        position: relative;
+        transition: all 0.4s ease;
+        background: #83184333;
+      }
+
+      .child-tag {
+        position: absolute;
+        top: -10px;
+        left: 8px;
+        background: #f472b6;
+        color: #1c1017;
+        font-size: 0.55rem;
+        font-weight: 800;
+        padding: 0.1em 0.45em;
+        border-radius: 3px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .child-label {
+        font-size: 0.7rem;
+        color: #f9a8d4;
+        font-weight: 700;
+        margin-top: 4px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .affected-icon {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        transition: all 0.3s;
+      }
+
+      .affected-icon.yes {
+        background: #34d399;
+        box-shadow: 0 0 6px #34d39966;
+      }
+      .affected-icon.no {
+        background: #64748b;
+      }
+
+      /* ── Grandchildren (nested inside children) ── */
+      .grandchild {
+        border: 2px dashed #fb923c;
+        border-radius: 8px;
+        padding: 10px 12px;
+        margin: 6px 0;
+        min-height: 36px;
+        position: relative;
+        background: #7c2d1233;
+        transition: all 0.4s ease;
+      }
+
+      .grandchild-tag {
+        position: absolute;
+        top: -9px;
+        left: 6px;
+        background: #fb923c;
+        color: #1c1007;
+        font-size: 0.5rem;
+        font-weight: 800;
+        padding: 0.1em 0.4em;
+        border-radius: 3px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      .grandchild-label {
+        font-size: 0.65rem;
+        color: #fdba74;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      /* ── Highlight states ── */
+      .child.flex-affected {
+        background: #f472b622;
+        box-shadow: 0 0 20px #f472b622;
+      }
+
+      .grandchild.not-affected {
+        opacity: 0.7;
+      }
+
+      /* ── Code Preview ── */
+      .code-preview {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 14px;
+        padding: 1.25rem 1.5rem;
+        width: 100%;
+        max-width: 700px;
+        margin-top: 1rem;
+      }
+
+      .code-preview h3 {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #64748b;
+        margin-bottom: 0.75rem;
+      }
+
+      .code-block {
+        font-family: "Fira Code", "Cascadia Code", monospace;
+        font-size: 0.78rem;
+        line-height: 1.8;
+        overflow-x: auto;
+      }
+
+      .code-line {
+        display: flex;
+        white-space: pre;
+        transition: all 0.3s;
+      }
+
+      .code-line .line-no {
+        color: #475569;
+        width: 28px;
+        text-align: right;
+        margin-right: 16px;
+        user-select: none;
+        flex-shrink: 0;
+      }
+
+      .code-line .code-text {
+        flex: 1;
+      }
+
+      .code-line.highlight-line {
+        background: #818cf815;
+        margin: 0 -1.5rem;
+        padding: 0 1.5rem;
+        border-left: 3px solid #818cf8;
+      }
+
+      .c-tag {
+        color: #f472b6;
+      }
+      .c-attr {
+        color: #818cf8;
+      }
+      .c-str {
+        color: #34d399;
+      }
+      .c-punct {
+        color: #64748b;
+      }
+      .c-cmt {
+        color: #475569;
+        font-style: italic;
+      }
+
+      /* ── Explanation Card ── */
+      .explanation {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 14px;
+        padding: 1.5rem 1.75rem;
+        width: 100%;
+        max-width: 700px;
+        margin-top: 1rem;
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+      }
+
+      .explanation .icon {
+        font-size: 1.5rem;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+
+      .explanation .text {
+        font-size: 0.88rem;
+        line-height: 1.7;
+        color: #cbd5e1;
+      }
+
+      .explanation .text strong {
+        color: #f472b6;
+      }
+
+      .explanation .text em {
+        color: #fb923c;
+        font-style: normal;
+        font-weight: 600;
+      }
+
+      /* ── Hierarchy tree ── */
+      .tree {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 14px;
+        padding: 1.5rem 1.75rem;
+        width: 100%;
+        max-width: 700px;
+        margin-top: 1rem;
+      }
+
+      .tree h3 {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #64748b;
+        margin-bottom: 0.75rem;
+        text-align: center;
+      }
+
+      .tree-visual {
+        font-family: "Fira Code", monospace;
+        font-size: 0.78rem;
+        line-height: 2;
+      }
+
+      .tree-node {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s;
+        padding: 2px 8px;
+        border-radius: 6px;
+      }
+
+      .tree-node.is-parent {
+        color: #818cf8;
+      }
+      .tree-node.is-child {
+        color: #f472b6;
+      }
+      .tree-node.is-grand {
+        color: #fb923c;
+      }
+
+      .tree-connector {
+        color: #334155;
+      }
+      .tree-badge {
+        font-size: 0.55rem;
+        padding: 0.1em 0.5em;
+        border-radius: 999px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .tree-badge.affected {
+        background: #34d39922;
+        color: #34d399;
+        border: 1px solid #34d39944;
+      }
+      .tree-badge.not-affected {
+        background: #64748b22;
+        color: #64748b;
+        border: 1px solid #64748b44;
+      }
+
+      /* ── Flex property effects ── */
+      .flex-parent.is-flex {
+        gap: 8px;
+        align-items: stretch;
+      }
+
+      .flex-parent.is-flex.dir-row {
+        flex-direction: row;
+        flex-wrap: wrap;
+      }
+      .flex-parent.is-flex.dir-col {
+        flex-direction: column;
+      }
+
+      .flex-parent.is-flex.jc-start {
+        justify-content: flex-start;
+      }
+      .flex-parent.is-flex.jc-center {
+        justify-content: center;
+      }
+      .flex-parent.is-flex.jc-end {
+        justify-content: flex-end;
+      }
+      .flex-parent.is-flex.jc-between {
+        justify-content: space-between;
+      }
+      .flex-parent.is-flex.jc-evenly {
+        justify-content: space-evenly;
+      }
+
+      @media (max-width: 600px) {
+        .control-row {
+          flex-direction: column;
+          align-items: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🧲 Flexbox Scope</h1>
+    <p class="subtitle">
+      <code>display: flex</code> only controls the layout of
+      <strong>direct children</strong>. Grandchildren are completely unaffected.
+      Toggle flex on and change properties to see.
+    </p>
+
+    <!-- Controls -->
+    <div class="controls">
+      <div class="control-section">
+        <label>Toggle display: flex on parent</label>
+        <div class="toggle-row">
+          <span class="toggle-label" id="toggleOff" style="color: #f87171"
+            >block</span
+          >
+          <label class="toggle">
+            <input type="checkbox" id="flexToggle" checked />
+            <span class="toggle-track"></span>
+          </label>
+          <span class="toggle-label" id="toggleOn" style="color: #34d399"
+            >flex</span
+          >
+        </div>
+      </div>
+
+      <h3>Flex properties on parent (only work when flex is ON)</h3>
+
+      <div class="control-row">
+        <div class="control-section">
+          <label>flex-direction</label>
+          <div class="control-row">
+            <button class="control-btn active" data-prop="dir" data-val="row">
+              row
+            </button>
+            <button class="control-btn" data-prop="dir" data-val="col">
+              column
+            </button>
+          </div>
+        </div>
+        <div class="control-section">
+          <label>justify-content</label>
+          <div class="control-row">
+            <button class="control-btn active" data-prop="jc" data-val="start">
+              flex-start
+            </button>
+            <button class="control-btn" data-prop="jc" data-val="center">
+              center
+            </button>
+            <button class="control-btn" data-prop="jc" data-val="end">
+              flex-end
+            </button>
+            <button class="control-btn" data-prop="jc" data-val="between">
+              space-between
+            </button>
+            <button class="control-btn" data-prop="jc" data-val="evenly">
+              space-evenly
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Demo -->
+    <div class="demo-area">
+      <div class="flex-parent is-flex dir-row jc-start" id="flexParent">
+        <span class="parent-tag">Parent</span>
+        <span class="parent-display-label" id="displayLabel"
+          >display: flex</span
+        >
+
+        <!-- Child 1 – has grandchildren -->
+        <div class="child flex-affected" id="child1">
+          <span class="child-tag">Direct Child 1</span>
+          <div class="child-label">
+            <span class="affected-icon yes"></span> Flex item
+          </div>
+          <div class="grandchild not-affected">
+            <span class="grandchild-tag">Grandchild A</span>
+            <div class="grandchild-label">
+              <span class="affected-icon no"></span> NOT a flex item
+            </div>
+          </div>
+          <div class="grandchild not-affected">
+            <span class="grandchild-tag">Grandchild B</span>
+            <div class="grandchild-label">
+              <span class="affected-icon no"></span> NOT a flex item
+            </div>
+          </div>
+        </div>
+
+        <!-- Child 2 – has grandchildren -->
+        <div class="child flex-affected" id="child2">
+          <span class="child-tag">Direct Child 2</span>
+          <div class="child-label">
+            <span class="affected-icon yes"></span> Flex item
+          </div>
+          <div class="grandchild not-affected">
+            <span class="grandchild-tag">Grandchild C</span>
+            <div class="grandchild-label">
+              <span class="affected-icon no"></span> NOT a flex item
+            </div>
+          </div>
+        </div>
+
+        <!-- Child 3 – simple -->
+        <div class="child flex-affected" id="child3">
+          <span class="child-tag">Direct Child 3</span>
+          <div class="child-label">
+            <span class="affected-icon yes"></span> Flex item
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DOM Tree -->
+    <div class="tree">
+      <h3>DOM hierarchy & flex scope</h3>
+      <div class="tree-visual" id="treeVisual">
+        <!-- filled by JS -->
+      </div>
+    </div>
+
+    <!-- Code Preview -->
+    <div class="code-preview">
+      <h3>What the CSS looks like</h3>
+      <div class="code-block" id="codeBlock">
+        <!-- filled by JS -->
+      </div>
+    </div>
+
+    <!-- Explanation -->
+    <div class="explanation">
+      <div class="icon">💡</div>
+      <div class="text" id="explanationText">
+        The parent has <code>display: flex</code>, so its
+        <strong>direct children</strong> become flex items and respond to flex
+        properties. But the <em>grandchildren</em> inside those children are in
+        normal flow — they stack vertically as block elements, completely
+        ignoring the parent's flex context. To make grandchildren flex too,
+        you'd need to add <code>display: flex</code> to their own parent (a
+        child).
+      </div>
+    </div>
+
+    <script>
+      const flexParent = document.getElementById("flexParent");
+      const flexToggle = document.getElementById("flexToggle");
+      const displayLabel = document.getElementById("displayLabel");
+      const treeVisual = document.getElementById("treeVisual");
+      const codeBlock = document.getElementById("codeBlock");
+      const explanationText = document.getElementById("explanationText");
+
+      let currentDir = "row";
+      let currentJC = "start";
+      let isFlexOn = true;
+
+      // Button handlers
+      document.querySelectorAll(".control-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const prop = btn.dataset.prop;
+          const val = btn.dataset.val;
+
+          // Deactivate siblings
+          document
+            .querySelectorAll(`.control-btn[data-prop="${prop}"]`)
+            .forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+
+          if (prop === "dir") currentDir = val;
+          if (prop === "jc") currentJC = val;
+
+          render();
+        });
+      });
+
+      flexToggle.addEventListener("change", () => {
+        isFlexOn = flexToggle.checked;
+        render();
+      });
+
+      function render() {
+        // Toggle classes
+        flexParent.classList.toggle("is-flex", isFlexOn);
+        flexParent.classList.toggle("is-block", !isFlexOn);
+
+        // Direction
+        flexParent.classList.remove("dir-row", "dir-col");
+        flexParent.classList.add(currentDir === "row" ? "dir-row" : "dir-col");
+
+        // Justify
+        flexParent.classList.remove(
+          "jc-start",
+          "jc-center",
+          "jc-end",
+          "jc-between",
+          "jc-evenly",
+        );
+        flexParent.classList.add("jc-" + currentJC);
+
+        // Display label
+        displayLabel.textContent = isFlexOn
+          ? "display: flex"
+          : "display: block";
+
+        // Children indicators
+        const children = document.querySelectorAll(".child");
+        const grandchildren = document.querySelectorAll(".grandchild");
+
+        children.forEach((c) => {
+          const icon = c.querySelector(".child-label .affected-icon");
+          const label = c.querySelector(".child-label");
+          if (isFlexOn) {
+            c.classList.add("flex-affected");
+            icon.classList.add("yes");
+            icon.classList.remove("no");
+            label.innerHTML = `<span class="affected-icon yes"></span> Flex item ✓`;
+          } else {
+            c.classList.remove("flex-affected");
+            icon.classList.remove("yes");
+            icon.classList.add("no");
+            label.innerHTML = `<span class="affected-icon no"></span> Block element`;
+          }
+        });
+
+        grandchildren.forEach((g) => {
+          const label = g.querySelector(".grandchild-label");
+          label.innerHTML = `<span class="affected-icon no"></span> NOT a flex item — always normal flow`;
+        });
+
+        // Toggle labels
+        document.getElementById("toggleOff").style.color = isFlexOn
+          ? "#64748b"
+          : "#f87171";
+        document.getElementById("toggleOn").style.color = isFlexOn
+          ? "#34d399"
+          : "#64748b";
+
+        // Control buttons opacity
+        document.querySelectorAll(".control-btn").forEach((b) => {
+          b.style.opacity = isFlexOn ? "1" : "0.35";
+          b.style.pointerEvents = isFlexOn ? "auto" : "none";
+        });
+
+        // Tree
+        const dirLabel = currentDir === "row" ? "row" : "column";
+        const jcMap = {
+          start: "flex-start",
+          center: "center",
+          end: "flex-end",
+          between: "space-between",
+          evenly: "space-evenly",
+        };
+        const jcLabel = jcMap[currentJC];
+
+        treeVisual.innerHTML = `
+            <div class="tree-node is-parent">
+                📦 .parent
+                <span class="tree-badge ${isFlexOn ? "affected" : "not-affected"}">
+                    ${isFlexOn ? "display: flex" : "display: block"}
+                </span>
+                ${isFlexOn ? `<span style="font-size:0.55rem;color:#94a3b8;">→ flex-direction: ${dirLabel} | justify-content: ${jcLabel}</span>` : ""}
+            </div>
+            <div class="tree-connector">&nbsp;&nbsp;├──</div>
+            <div class="tree-node is-child" style="padding-left:2rem;">
+                🟪 .child-1
+                <span class="tree-badge ${isFlexOn ? "affected" : "not-affected"}">
+                    ${isFlexOn ? "✓ flex item" : "normal"}
+                </span>
+            </div>
+            <div class="tree-connector">&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├──</div>
+            <div class="tree-node is-grand" style="padding-left:4rem;">
+                🟧 .grandchild-a
+                <span class="tree-badge not-affected">✗ not affected</span>
+            </div>
+            <div class="tree-connector">&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└──</div>
+            <div class="tree-node is-grand" style="padding-left:4rem;">
+                🟧 .grandchild-b
+                <span class="tree-badge not-affected">✗ not affected</span>
+            </div>
+            <div class="tree-connector">&nbsp;&nbsp;├──</div>
+            <div class="tree-node is-child" style="padding-left:2rem;">
+                🟪 .child-2
+                <span class="tree-badge ${isFlexOn ? "affected" : "not-affected"}">
+                    ${isFlexOn ? "✓ flex item" : "normal"}
+                </span>
+            </div>
+            <div class="tree-connector">&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└──</div>
+            <div class="tree-node is-grand" style="padding-left:4rem;">
+                🟧 .grandchild-c
+                <span class="tree-badge not-affected">✗ not affected</span>
+            </div>
+            <div class="tree-connector">&nbsp;&nbsp;└──</div>
+            <div class="tree-node is-child" style="padding-left:2rem;">
+                🟪 .child-3
+                <span class="tree-badge ${isFlexOn ? "affected" : "not-affected"}">
+                    ${isFlexOn ? "✓ flex item" : "normal"}
+                </span>
+            </div>
+        `;
+
+        // Code
+        if (isFlexOn) {
+          codeBlock.innerHTML = `
+<div class="code-line highlight-line"><span class="line-no">1</span><span class="code-text"><span class="c-tag">.parent</span> <span class="c-punct">{</span></span></div>
+<div class="code-line highlight-line"><span class="line-no">2</span><span class="code-text">  <span class="c-attr">display</span><span class="c-punct">:</span> <span class="c-str">flex</span><span class="c-punct">;</span>                 <span class="c-cmt">/* ← this one line... */</span></span></div>
+<div class="code-line highlight-line"><span class="line-no">3</span><span class="code-text">  <span class="c-attr">flex-direction</span><span class="c-punct">:</span> <span class="c-str">${dirLabel}</span><span class="c-punct">;</span></span></div>
+<div class="code-line highlight-line"><span class="line-no">4</span><span class="code-text">  <span class="c-attr">justify-content</span><span class="c-punct">:</span> <span class="c-str">${jcLabel}</span><span class="c-punct">;</span></span></div>
+<div class="code-line highlight-line"><span class="line-no">5</span><span class="code-text"><span class="c-punct">}</span></span></div>
+<div class="code-line"><span class="line-no">6</span><span class="code-text"></span></div>
+<div class="code-line"><span class="line-no">7</span><span class="code-text"><span class="c-cmt">/* ✓ .child-1, .child-2, .child-3 → become flex items */</span></span></div>
+<div class="code-line"><span class="line-no">8</span><span class="code-text"><span class="c-cmt">/* ✗ .grandchild-a, b, c → still normal block flow */</span></span></div>
+<div class="code-line"><span class="line-no">9</span><span class="code-text"></span></div>
+<div class="code-line"><span class="line-no">10</span><span class="code-text"><span class="c-cmt">/* To make grandchildren flex items too: */</span></span></div>
+<div class="code-line"><span class="line-no">11</span><span class="code-text"><span class="c-tag">.child-1</span> <span class="c-punct">{</span> <span class="c-attr">display</span><span class="c-punct">:</span> <span class="c-str">flex</span><span class="c-punct">;</span> <span class="c-punct">}</span>  <span class="c-cmt">/* separate flex context */</span></span></div>
+            `;
+        } else {
+          codeBlock.innerHTML = `
+<div class="code-line"><span class="line-no">1</span><span class="code-text"><span class="c-tag">.parent</span> <span class="c-punct">{</span></span></div>
+<div class="code-line"><span class="line-no">2</span><span class="code-text">  <span class="c-attr">display</span><span class="c-punct">:</span> <span class="c-str">block</span><span class="c-punct">;</span>                <span class="c-cmt">/* default — no flex */</span></span></div>
+<div class="code-line"><span class="line-no">3</span><span class="code-text"><span class="c-punct">}</span></span></div>
+<div class="code-line"><span class="line-no">4</span><span class="code-text"></span></div>
+<div class="code-line"><span class="line-no">5</span><span class="code-text"><span class="c-cmt">/* All elements are in normal block flow */</span></span></div>
+<div class="code-line"><span class="line-no">6</span><span class="code-text"><span class="c-cmt">/* Children stack vertically, full width */</span></span></div>
+            `;
+        }
+
+        // Explanation
+        if (isFlexOn) {
+          explanationText.innerHTML = `
+                The parent has <code style="background:#1e293b;padding:0.1em 0.4em;border-radius:3px;color:#facc15;">display: flex</code>,
+                so its <strong>3 direct children</strong> (pink boxes) become <strong>flex items</strong> and are laid out
+                along the ${currentDir === "row" ? "horizontal" : "vertical"} axis.
+                But look at the <em>grandchildren</em> (orange dashed boxes) — they remain in <strong>normal block flow</strong>
+                inside their parent child. The parent's flex properties have <strong>zero effect</strong> on them.
+                Each flex context is <strong>one level deep only</strong>.
+            `;
+        } else {
+          explanationText.innerHTML = `
+                With <code style="background:#1e293b;padding:0.1em 0.4em;border-radius:3px;color:#facc15;">display: block</code>,
+                everything is in normal document flow. Children and grandchildren all stack vertically.
+                <strong>Toggle flex ON</strong> to see how only the direct children change their layout while grandchildren stay exactly the same.
+            `;
+        }
+      }
+
+      // Initial render
+      render();
+    </script>
+  </body>
+</html>

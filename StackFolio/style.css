@@ -125,4 +125,13 @@ button {
     color: white;
     text-decoration: none;
   }
+
+  #skills li {
+    display: inline-block;
+    margin-right: 8px;
+    margin-bottom: 8px;
+    padding: 6px 10px;
+    background-color: #e5edff;
+    border: 1px solid #c7d2fe;
+  }
   

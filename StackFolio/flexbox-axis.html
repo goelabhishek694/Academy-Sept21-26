@@ -1,0 +1,944 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Flexbox Axes – How They Flip</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          "Segoe UI",
+          system-ui,
+          -apple-system,
+          sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 2rem 1rem 4rem;
+      }
+
+      h1 {
+        font-size: 2.2rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #f472b6, #38bdf8);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
+      }
+
+      .subtitle {
+        color: #94a3b8;
+        margin-bottom: 2.5rem;
+        font-size: 1.1rem;
+        text-align: center;
+        max-width: 640px;
+        line-height: 1.7;
+      }
+
+      .subtitle code {
+        background: #1e293b;
+        padding: 0.15em 0.5em;
+        border-radius: 5px;
+        color: #facc15;
+        font-size: 0.95em;
+      }
+
+      /* ── Direction Switcher ── */
+      .switcher {
+        display: flex;
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 14px;
+        overflow: hidden;
+        margin-bottom: 2rem;
+      }
+
+      .switch-btn {
+        padding: 1rem 1.8rem;
+        border: none;
+        background: transparent;
+        color: #94a3b8;
+        font-size: 0.95rem;
+        font-weight: 700;
+        font-family: "Fira Code", "Cascadia Code", monospace;
+        cursor: pointer;
+        transition: all 0.25s;
+        position: relative;
+      }
+
+      .switch-btn:not(:last-child)::after {
+        content: "";
+        position: absolute;
+        right: 0;
+        top: 20%;
+        height: 60%;
+        width: 1px;
+        background: #334155;
+      }
+
+      .switch-btn:hover {
+        color: #e2e8f0;
+        background: #ffffff08;
+      }
+
+      .switch-btn.active {
+        background: #818cf822;
+        color: #c7d2fe;
+      }
+
+      .dir-icon {
+        margin-right: 0.5rem;
+        font-size: 1.1rem;
+      }
+
+      /* ── Legend ── */
+      .legend {
+        display: flex;
+        gap: 2.5rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-size: 0.9rem;
+        font-weight: 700;
+      }
+
+      .legend-line {
+        width: 32px;
+        height: 4px;
+        border-radius: 2px;
+      }
+
+      .legend-line.main {
+        background: #f472b6;
+      }
+      .legend-line.cross {
+        background: #38bdf8;
+      }
+
+      /* ── Stage ── */
+      .stage {
+        position: relative;
+        width: 100%;
+        max-width: 800px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      /* ── Axis Diagram ── */
+      .axis-diagram {
+        position: relative;
+        width: 660px;
+        height: 520px;
+        margin-bottom: 2rem;
+      }
+
+      @media (max-width: 700px) {
+        .axis-diagram {
+          width: 100%;
+          max-width: 420px;
+          height: 460px;
+        }
+      }
+
+      /* SVG Axes */
+      .axis-svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        pointer-events: none;
+      }
+
+      .axis-line {
+        stroke-width: 3.5;
+        stroke-linecap: round;
+        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .main-color {
+        stroke: #f472b6;
+        fill: #f472b6;
+      }
+      .cross-color {
+        stroke: #38bdf8;
+        fill: #38bdf8;
+      }
+
+      /* ── Axis Name Labels ── */
+      .axis-name {
+        position: absolute;
+        z-index: 5;
+        pointer-events: none;
+        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        white-space: nowrap;
+      }
+
+      .axis-name-inner {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .axis-name .title {
+        font-size: 0.95rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+      }
+
+      .axis-name .direction {
+        font-size: 0.75rem;
+        font-weight: 600;
+        opacity: 0.7;
+      }
+
+      .axis-name.main-name .title {
+        color: #f472b6;
+      }
+      .axis-name.main-name .direction {
+        color: #f9a8d4;
+      }
+      .axis-name.cross-name .title {
+        color: #38bdf8;
+      }
+      .axis-name.cross-name .direction {
+        color: #7dd3fc;
+      }
+
+      /* ── Edge Labels (main-start etc.) ── */
+      .edge-label {
+        position: absolute;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 5;
+        pointer-events: none;
+        white-space: nowrap;
+        padding: 0.2em 0.5em;
+        border-radius: 4px;
+      }
+
+      .edge-label.main-edge {
+        color: #f9a8d4;
+        background: #f472b618;
+      }
+
+      .edge-label.cross-edge {
+        color: #7dd3fc;
+        background: #38bdf818;
+      }
+
+      /* ── Property Tags ── */
+      .prop-tag {
+        position: absolute;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 0.35em 0.75em;
+        border-radius: 8px;
+        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        white-space: nowrap;
+        z-index: 5;
+        pointer-events: none;
+        font-family: "Fira Code", monospace;
+      }
+
+      .prop-tag.prop-main {
+        background: #831843;
+        color: #fce7f3;
+        border: 1px solid #f472b644;
+      }
+
+      .prop-tag.prop-cross {
+        background: #0c4a6e;
+        color: #e0f2fe;
+        border: 1px solid #38bdf844;
+      }
+
+      /* ── Flex Container ── */
+      .flex-container {
+        position: absolute;
+        background: #1e293b;
+        border: 2px solid #475569;
+        border-radius: 16px;
+        z-index: 2;
+        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+      }
+
+      .container-tag {
+        position: absolute;
+        top: -13px;
+        left: 16px;
+        background: #475569;
+        color: #cbd5e1;
+        font-size: 0.6rem;
+        font-weight: 800;
+        padding: 0.2em 0.65em;
+        border-radius: 5px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        z-index: 6;
+      }
+
+      .flex-items-wrapper {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        padding: 16px;
+        gap: 12px;
+        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .flex-item {
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        font-weight: 800;
+        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        flex-shrink: 0;
+      }
+
+      .item-1 {
+        background: #7c3aed;
+        color: #ede9fe;
+      }
+      .item-2 {
+        background: #059669;
+        color: #d1fae5;
+      }
+      .item-3 {
+        background: #d97706;
+        color: #fef3c7;
+      }
+      .item-4 {
+        background: #dc2626;
+        color: #fee2e2;
+      }
+
+      /* ── Info Cards ── */
+      .info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.25rem;
+        width: 100%;
+        max-width: 740px;
+      }
+
+      @media (max-width: 600px) {
+        .info-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .info-card {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 14px;
+        padding: 1.25rem 1.5rem;
+      }
+
+      .info-card.main-card {
+        border-left: 4px solid #f472b6;
+      }
+      .info-card.cross-card {
+        border-left: 4px solid #38bdf8;
+      }
+
+      .info-card h3 {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 0.75rem;
+      }
+
+      .info-card.main-card h3 {
+        color: #f472b6;
+      }
+      .info-card.cross-card h3 {
+        color: #38bdf8;
+      }
+
+      .info-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        line-height: 2.1;
+      }
+
+      .info-row .lbl {
+        color: #94a3b8;
+      }
+
+      .info-row .val {
+        font-weight: 700;
+        font-family: "Fira Code", monospace;
+        font-size: 0.8rem;
+      }
+
+      .info-card.main-card .val {
+        color: #f9a8d4;
+      }
+      .info-card.cross-card .val {
+        color: #7dd3fc;
+      }
+
+      /* ── Code Card ── */
+      .code-card {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 14px;
+        padding: 1.25rem 1.5rem;
+        width: 100%;
+        max-width: 740px;
+        margin-top: 1.25rem;
+      }
+
+      .code-card h3 {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #64748b;
+        margin-bottom: 0.75rem;
+      }
+
+      .code-block {
+        font-family: "Fira Code", "Cascadia Code", monospace;
+        font-size: 0.82rem;
+        line-height: 2;
+      }
+
+      .code-line {
+        padding: 0 0.75rem;
+        border-radius: 4px;
+        transition: background 0.3s;
+      }
+
+      .code-line.hl {
+        background: #818cf812;
+        border-left: 3px solid #818cf8;
+        padding-left: calc(0.75rem - 3px);
+      }
+
+      .c-sel {
+        color: #c7d2fe;
+      }
+      .c-prop {
+        color: #94a3b8;
+      }
+      .c-val {
+        color: #34d399;
+      }
+      .c-pnc {
+        color: #475569;
+      }
+      .c-cmt {
+        color: #475569;
+        font-style: italic;
+      }
+
+      /* ── Insight ── */
+      .insight {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 14px;
+        padding: 1.5rem 1.75rem;
+        width: 100%;
+        max-width: 740px;
+        margin-top: 1.25rem;
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+      }
+
+      .insight .icon {
+        font-size: 1.5rem;
+        flex-shrink: 0;
+      }
+
+      .insight .text {
+        font-size: 0.92rem;
+        line-height: 1.8;
+        color: #cbd5e1;
+      }
+
+      .insight .text strong.main {
+        color: #f472b6;
+      }
+      .insight .text strong.cross {
+        color: #38bdf8;
+      }
+
+      .insight .text code {
+        background: #0f172a;
+        padding: 0.15em 0.45em;
+        border-radius: 4px;
+        font-size: 0.85em;
+        color: #facc15;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>↔️ Flexbox Axes</h1>
+    <p class="subtitle">
+      When you change <code>flex-direction</code>, the
+      <strong style="color: #f472b6">main axis</strong> and
+      <strong style="color: #38bdf8">cross axis</strong> swap — and so do the
+      properties that control them.
+    </p>
+
+    <!-- Direction Buttons -->
+    <div class="switcher">
+      <button class="switch-btn active" data-dir="row">
+        <span class="dir-icon">→</span>row
+      </button>
+      <button class="switch-btn" data-dir="row-reverse">
+        <span class="dir-icon">←</span>row-reverse
+      </button>
+      <button class="switch-btn" data-dir="column">
+        <span class="dir-icon">↓</span>column
+      </button>
+      <button class="switch-btn" data-dir="column-reverse">
+        <span class="dir-icon">↑</span>column-reverse
+      </button>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-line main"></div>
+        <span style="color: #f472b6">Main Axis</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-line cross"></div>
+        <span style="color: #38bdf8">Cross Axis</span>
+      </div>
+    </div>
+
+    <!-- Diagram -->
+    <div class="stage">
+      <div class="axis-diagram" id="axisDiagram">
+        <svg
+          class="axis-svg"
+          id="axisSvg"
+          viewBox="0 0 660 520"
+          preserveAspectRatio="xMidYMid meet"
+        >
+          <defs>
+            <marker
+              id="arrowMain"
+              markerWidth="12"
+              markerHeight="10"
+              refX="11"
+              refY="5"
+              orient="auto"
+            >
+              <polygon points="0 0, 12 5, 0 10" class="main-color" />
+            </marker>
+            <marker
+              id="arrowCross"
+              markerWidth="12"
+              markerHeight="10"
+              refX="11"
+              refY="5"
+              orient="auto"
+            >
+              <polygon points="0 0, 12 5, 0 10" class="cross-color" />
+            </marker>
+          </defs>
+          <line
+            id="mainLine"
+            class="axis-line main-color"
+            marker-end="url(#arrowMain)"
+          />
+          <line
+            id="crossLine"
+            class="axis-line cross-color"
+            marker-end="url(#arrowCross)"
+          />
+        </svg>
+
+        <!-- Axis name labels -->
+        <div class="axis-name main-name" id="mainName">
+          <div class="axis-name-inner">
+            <span class="title">Main Axis</span>
+            <span class="direction" id="mainDirText"></span>
+          </div>
+        </div>
+        <div class="axis-name cross-name" id="crossName">
+          <div class="axis-name-inner">
+            <span class="title">Cross Axis</span>
+            <span class="direction" id="crossDirText"></span>
+          </div>
+        </div>
+
+        <!-- Edge labels -->
+        <div class="edge-label main-edge" id="mainStart">main-start</div>
+        <div class="edge-label main-edge" id="mainEnd">main-end</div>
+        <div class="edge-label cross-edge" id="crossStart">cross-start</div>
+        <div class="edge-label cross-edge" id="crossEnd">cross-end</div>
+
+        <!-- Property tags -->
+        <div class="prop-tag prop-main" id="propMain">justify-content</div>
+        <div class="prop-tag prop-cross" id="propCross">align-items</div>
+
+        <!-- Flex Container -->
+        <div class="flex-container" id="flexContainer">
+          <span class="container-tag">Flex Container</span>
+          <div class="flex-items-wrapper" id="flexWrapper">
+            <div class="flex-item item-1">1</div>
+            <div class="flex-item item-2">2</div>
+            <div class="flex-item item-3">3</div>
+            <div class="flex-item item-4">4</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info Cards -->
+    <div class="info-grid">
+      <div class="info-card main-card">
+        <h3>Main Axis</h3>
+        <div class="info-row">
+          <span class="lbl">Direction</span
+          ><span class="val" id="infoMainDir">Left → Right</span>
+        </div>
+        <div class="info-row">
+          <span class="lbl">Distribute items</span
+          ><span class="val">justify-content</span>
+        </div>
+        <div class="info-row">
+          <span class="lbl">Item sizing</span
+          ><span class="val">flex-grow / shrink / basis</span>
+        </div>
+      </div>
+      <div class="info-card cross-card">
+        <h3>Cross Axis</h3>
+        <div class="info-row">
+          <span class="lbl">Direction</span
+          ><span class="val" id="infoCrossDir">Top → Bottom</span>
+        </div>
+        <div class="info-row">
+          <span class="lbl">Align all items</span
+          ><span class="val">align-items</span>
+        </div>
+        <div class="info-row">
+          <span class="lbl">Align one item</span
+          ><span class="val">align-self</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Code -->
+    <div class="code-card">
+      <h3>CSS</h3>
+      <div class="code-block" id="codeBlock"></div>
+    </div>
+
+    <!-- Insight -->
+    <div class="insight">
+      <div class="icon">💡</div>
+      <div class="text" id="insightText"></div>
+    </div>
+
+    <script>
+      const buttons = document.querySelectorAll(".switch-btn");
+      const flexContainer = document.getElementById("flexContainer");
+      const flexWrapper = document.getElementById("flexWrapper");
+      const mainLine = document.getElementById("mainLine");
+      const crossLine = document.getElementById("crossLine");
+
+      const mainName = document.getElementById("mainName");
+      const crossName = document.getElementById("crossName");
+      const mainDirText = document.getElementById("mainDirText");
+      const crossDirText = document.getElementById("crossDirText");
+
+      const propMain = document.getElementById("propMain");
+      const propCross = document.getElementById("propCross");
+
+      const mainStart = document.getElementById("mainStart");
+      const mainEnd = document.getElementById("mainEnd");
+      const crossStart = document.getElementById("crossStart");
+      const crossEnd = document.getElementById("crossEnd");
+
+      const codeBlock = document.getElementById("codeBlock");
+      const insightText = document.getElementById("insightText");
+
+      // Container box within the 660×520 viewBox
+      const B = { x: 140, y: 100, w: 380, h: 320 };
+      const GAP = 50;
+
+      const configs = {
+        row: {
+          main: {
+            x1: B.x - GAP,
+            y1: B.y + B.h / 2,
+            x2: B.x + B.w + GAP,
+            y2: B.y + B.h / 2,
+          },
+          cross: {
+            x1: B.x + B.w / 2,
+            y1: B.y - GAP,
+            x2: B.x + B.w / 2,
+            y2: B.y + B.h + GAP,
+          },
+
+          mainNamePos: { left: B.x + B.w + GAP + 16, top: B.y + B.h / 2 - 22 },
+          crossNamePos: { left: B.x + B.w / 2 + 16, top: B.y - GAP - 40 },
+
+          mainStartPos: { left: B.x - GAP - 80, top: B.y + B.h / 2 - 12 },
+          mainEndPos: { left: B.x + B.w + GAP + 16, top: B.y + B.h / 2 + 18 },
+          crossStartPos: { left: B.x + B.w / 2 + 16, top: B.y - GAP + 2 },
+          crossEndPos: { left: B.x + B.w / 2 + 16, top: B.y + B.h + GAP - 18 },
+
+          propMainPos: { left: B.x + 60, top: B.y + B.h + 30 },
+          propCrossPos: { left: B.x + B.w + 16, top: B.y + 10 },
+
+          mainDir: "Left → Right",
+          crossDir: "Top → Bottom",
+          flexDir: "row",
+          itemW: 70,
+          itemH: "auto",
+          itemMinH: 50,
+          boxW: B.w,
+          boxH: B.h,
+        },
+        "row-reverse": {
+          main: {
+            x1: B.x + B.w + GAP,
+            y1: B.y + B.h / 2,
+            x2: B.x - GAP,
+            y2: B.y + B.h / 2,
+          },
+          cross: {
+            x1: B.x + B.w / 2,
+            y1: B.y - GAP,
+            x2: B.x + B.w / 2,
+            y2: B.y + B.h + GAP,
+          },
+
+          mainNamePos: { left: B.x - GAP - 145, top: B.y + B.h / 2 - 22 },
+          crossNamePos: { left: B.x + B.w / 2 + 16, top: B.y - GAP - 40 },
+
+          mainStartPos: { left: B.x + B.w + GAP + 16, top: B.y + B.h / 2 - 12 },
+          mainEndPos: { left: B.x - GAP - 72, top: B.y + B.h / 2 + 18 },
+          crossStartPos: { left: B.x + B.w / 2 + 16, top: B.y - GAP + 2 },
+          crossEndPos: { left: B.x + B.w / 2 + 16, top: B.y + B.h + GAP - 18 },
+
+          propMainPos: { left: B.x + 60, top: B.y + B.h + 30 },
+          propCrossPos: { left: B.x + B.w + 16, top: B.y + 10 },
+
+          mainDir: "Right → Left",
+          crossDir: "Top → Bottom",
+          flexDir: "row-reverse",
+          itemW: 70,
+          itemH: "auto",
+          itemMinH: 50,
+          boxW: B.w,
+          boxH: B.h,
+        },
+        column: {
+          main: {
+            x1: B.x + B.w / 2,
+            y1: B.y - GAP,
+            x2: B.x + B.w / 2,
+            y2: B.y + B.h + GAP,
+          },
+          cross: {
+            x1: B.x - GAP,
+            y1: B.y + B.h / 2,
+            x2: B.x + B.w + GAP,
+            y2: B.y + B.h / 2,
+          },
+
+          mainNamePos: { left: B.x + B.w / 2 + 16, top: B.y + B.h + GAP + 8 },
+          crossNamePos: { left: B.x + B.w + GAP + 16, top: B.y + B.h / 2 - 22 },
+
+          mainStartPos: { left: B.x + B.w / 2 + 16, top: B.y - GAP + 2 },
+          mainEndPos: { left: B.x + B.w / 2 + 16, top: B.y + B.h + GAP - 18 },
+          crossStartPos: { left: B.x - GAP - 88, top: B.y + B.h / 2 - 12 },
+          crossEndPos: { left: B.x + B.w + GAP + 16, top: B.y + B.h / 2 + 18 },
+
+          propMainPos: { left: B.x - 10, top: B.y + B.h + 30 },
+          propCrossPos: { left: B.x + B.w + 16, top: B.y + 10 },
+
+          mainDir: "Top → Bottom",
+          crossDir: "Left → Right",
+          flexDir: "column",
+          itemW: "auto",
+          itemH: 55,
+          itemMinH: 0,
+          boxW: B.w,
+          boxH: B.h,
+        },
+        "column-reverse": {
+          main: {
+            x1: B.x + B.w / 2,
+            y1: B.y + B.h + GAP,
+            x2: B.x + B.w / 2,
+            y2: B.y - GAP,
+          },
+          cross: {
+            x1: B.x - GAP,
+            y1: B.y + B.h / 2,
+            x2: B.x + B.w + GAP,
+            y2: B.y + B.h / 2,
+          },
+
+          mainNamePos: { left: B.x + B.w / 2 + 16, top: B.y - GAP - 40 },
+          crossNamePos: { left: B.x + B.w + GAP + 16, top: B.y + B.h / 2 - 22 },
+
+          mainStartPos: { left: B.x + B.w / 2 + 16, top: B.y + B.h + GAP - 18 },
+          mainEndPos: { left: B.x + B.w / 2 + 16, top: B.y - GAP + 2 },
+          crossStartPos: { left: B.x - GAP - 88, top: B.y + B.h / 2 - 12 },
+          crossEndPos: { left: B.x + B.w + GAP + 16, top: B.y + B.h / 2 + 18 },
+
+          propMainPos: { left: B.x - 10, top: B.y + B.h + 30 },
+          propCrossPos: { left: B.x + B.w + 16, top: B.y + 10 },
+
+          mainDir: "Bottom → Top",
+          crossDir: "Left → Right",
+          flexDir: "column-reverse",
+          itemW: "auto",
+          itemH: 55,
+          itemMinH: 0,
+          boxW: B.w,
+          boxH: B.h,
+        },
+      };
+
+      let currentDir = "row";
+
+      buttons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          buttons.forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          currentDir = btn.dataset.dir;
+          render();
+        });
+      });
+
+      function px(v) {
+        return v + "px";
+      }
+
+      function posEl(el, pos) {
+        el.style.left = px(pos.left);
+        el.style.top = px(pos.top);
+      }
+
+      function render() {
+        const c = configs[currentDir];
+
+        // SVG axes
+        mainLine.setAttribute("x1", c.main.x1);
+        mainLine.setAttribute("y1", c.main.y1);
+        mainLine.setAttribute("x2", c.main.x2);
+        mainLine.setAttribute("y2", c.main.y2);
+
+        crossLine.setAttribute("x1", c.cross.x1);
+        crossLine.setAttribute("y1", c.cross.y1);
+        crossLine.setAttribute("x2", c.cross.x2);
+        crossLine.setAttribute("y2", c.cross.y2);
+
+        // Axis name labels
+        posEl(mainName, c.mainNamePos);
+        posEl(crossName, c.crossNamePos);
+        mainDirText.textContent = c.mainDir;
+        crossDirText.textContent = c.crossDir;
+
+        // Edge labels
+        posEl(mainStart, c.mainStartPos);
+        posEl(mainEnd, c.mainEndPos);
+        posEl(crossStart, c.crossStartPos);
+        posEl(crossEnd, c.crossEndPos);
+
+        // Property tags
+        posEl(propMain, c.propMainPos);
+        posEl(propCross, c.propCrossPos);
+
+        // Flex container
+        flexContainer.style.left = px(B.x);
+        flexContainer.style.top = px(B.y);
+        flexContainer.style.width = px(c.boxW);
+        flexContainer.style.height = px(c.boxH);
+
+        // Flex items
+        flexWrapper.style.flexDirection = c.flexDir;
+
+        document.querySelectorAll(".flex-item").forEach((item) => {
+          item.style.width = c.itemW === "auto" ? "auto" : px(c.itemW);
+          item.style.height = c.itemH === "auto" ? "auto" : px(c.itemH);
+          item.style.minWidth = c.flexDir.startsWith("column") ? "0" : "60px";
+          item.style.minHeight = c.itemMinH ? px(c.itemMinH) : "auto";
+        });
+
+        // Info cards
+        document.getElementById("infoMainDir").textContent = c.mainDir;
+        document.getElementById("infoCrossDir").textContent = c.crossDir;
+
+        // Code
+        codeBlock.innerHTML = `
+<div class="code-line"><span class="c-sel">.container</span> <span class="c-pnc">{</span></div>
+<div class="code-line hl">  <span class="c-prop">display:</span> <span class="c-val">flex</span><span class="c-pnc">;</span></div>
+<div class="code-line hl">  <span class="c-prop">flex-direction:</span> <span class="c-val">${currentDir}</span><span class="c-pnc">;</span></div>
+<div class="code-line"></div>
+<div class="code-line">  <span class="c-cmt">/* Main axis (${c.mainDir}) */</span></div>
+<div class="code-line">  <span class="c-prop">justify-content:</span> <span class="c-val">flex-start</span><span class="c-pnc">;</span></div>
+<div class="code-line"></div>
+<div class="code-line">  <span class="c-cmt">/* Cross axis (${c.crossDir}) */</span></div>
+<div class="code-line">  <span class="c-prop">align-items:</span> <span class="c-val">stretch</span><span class="c-pnc">;</span></div>
+<div class="code-line"><span class="c-pnc">}</span></div>
+        `;
+
+        // Insight
+        const isRow = currentDir.startsWith("row");
+        const isReverse = currentDir.includes("reverse");
+
+        insightText.innerHTML = `
+            With <code>flex-direction: ${currentDir}</code>, items are placed
+            <strong class="main">${c.mainDir.toLowerCase()}</strong> along the
+            <strong class="main">main axis</strong>.
+            <code>justify-content</code> distributes space in this direction.
+            The <strong class="cross">cross axis</strong> runs perpendicular —
+            <strong class="cross">${c.crossDir.toLowerCase()}</strong> —
+            controlled by <code>align-items</code>.
+            ${
+              isReverse
+                ? '<br><br>The <code>-reverse</code> keyword flips <strong class="main">main-start</strong> and <strong class="main">main-end</strong> — items begin from the opposite edge, but the cross axis stays the same.'
+                : ""
+            }
+            ${
+              !isRow
+                ? '<br><br>Notice how <code>justify-content</code> now works <strong class="main">vertically</strong> and <code>align-items</code> works <strong class="cross">horizontally</strong> — the exact opposite of <code>row</code>.'
+                : ""
+            }
+        `;
+      }
+
+      render();
+    </script>
+  </body>
+</html>
