@@ -17,9 +17,13 @@
 
       .grid-demo{
         display:grid;
+        height:600px;
         background-color: #e2e8f0;
         padding: 12px;
-        grid-template-columns: 1fr 2fr 1fr;
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: 1fr 2fr 1fr;
+        gap: 16px 32px;
+        /* place-items: center; */
       }
     </style>
   </head>
