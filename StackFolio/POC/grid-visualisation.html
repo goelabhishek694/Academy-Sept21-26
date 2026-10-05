@@ -1,0 +1,670 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Grid Template Areas — Visual Layout Builder</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          "Segoe UI",
+          system-ui,
+          -apple-system,
+          sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 2rem 1rem 4rem;
+      }
+
+      h1 {
+        font-size: 2.1rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #a78bfa, #38bdf8);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.4rem;
+      }
+
+      .subtitle {
+        color: #94a3b8;
+        font-size: 1.05rem;
+        text-align: center;
+        max-width: 660px;
+        line-height: 1.7;
+        margin-bottom: 2.5rem;
+      }
+
+      .subtitle code {
+        background: #1e293b;
+        padding: 0.12em 0.5em;
+        border-radius: 5px;
+        color: #facc15;
+        font-size: 0.92em;
+      }
+
+      /* ── Layout Presets ── */
+      .presets {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-bottom: 2rem;
+      }
+
+      .preset-btn {
+        padding: 0.7rem 1.4rem;
+        border: 2px solid #334155;
+        border-radius: 12px;
+        background: #1e293b;
+        color: #94a3b8;
+        font-size: 0.85rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.25s;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.4rem;
+        min-width: 110px;
+      }
+
+      .preset-btn:hover {
+        border-color: #64748b;
+        color: #e2e8f0;
+        background: #1e293b;
+      }
+
+      .preset-btn.active {
+        border-color: #818cf8;
+        color: #c7d2fe;
+        background: #818cf822;
+      }
+
+      /* Mini preview grid inside button */
+      .mini-grid {
+        display: grid;
+        width: 52px;
+        height: 36px;
+        gap: 2px;
+        border-radius: 4px;
+        overflow: hidden;
+      }
+
+      .mini-grid .m-h {
+        background: #f472b6;
+        border-radius: 2px;
+      }
+      .mini-grid .m-s {
+        background: #a78bfa;
+        border-radius: 2px;
+      }
+      .mini-grid .m-m {
+        background: #38bdf8;
+        border-radius: 2px;
+      }
+      .mini-grid .m-f {
+        background: #34d399;
+        border-radius: 2px;
+      }
+
+      /* ── Main Demo ── */
+      .demo-wrapper {
+        display: flex;
+        gap: 2.5rem;
+        width: 100%;
+        max-width: 1050px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      /* The visual grid */
+      .grid-visual {
+        flex: 1 1 480px;
+        max-width: 540px;
+        min-height: 400px;
+        display: grid;
+        gap: 10px;
+        padding: 12px;
+        background: #1e293b;
+        border: 2px solid #334155;
+        border-radius: 16px;
+        position: relative;
+        transition:
+          grid-template-columns 0.5s ease,
+          grid-template-rows 0.5s ease;
+      }
+
+      .grid-visual .region-label {
+        position: absolute;
+        top: -14px;
+        left: 16px;
+        background: #334155;
+        color: #94a3b8;
+        font-size: 0.6rem;
+        font-weight: 800;
+        padding: 0.15em 0.6em;
+        border-radius: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+
+      /* Grid children */
+      .grid-area-item {
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.3rem;
+        font-weight: 700;
+        transition: all 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .grid-area-item .area-name {
+        font-size: 1.1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .grid-area-item .area-prop {
+        font-size: 0.65rem;
+        opacity: 0.7;
+        font-family: "Fira Code", monospace;
+      }
+
+      .area-header {
+        background: linear-gradient(135deg, #e11d6a, #f472b6);
+        color: #fff;
+        grid-area: header;
+      }
+
+      .area-sidebar {
+        background: linear-gradient(135deg, #7c3aed, #a78bfa);
+        color: #fff;
+        grid-area: sidebar;
+      }
+
+      .area-main {
+        background: linear-gradient(135deg, #0284c7, #38bdf8);
+        color: #fff;
+        grid-area: main;
+      }
+
+      .area-footer {
+        background: linear-gradient(135deg, #059669, #34d399);
+        color: #fff;
+        grid-area: footer;
+      }
+
+      /* ── Code Panel ── */
+      .code-panel {
+        flex: 1 1 380px;
+        max-width: 460px;
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+      }
+
+      .code-card {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 14px;
+        padding: 1.25rem 1.5rem;
+      }
+
+      .code-card h3 {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #64748b;
+        margin-bottom: 0.85rem;
+      }
+
+      .code-block {
+        font-family: "Fira Code", "Cascadia Code", monospace;
+        font-size: 0.8rem;
+        line-height: 2;
+      }
+
+      .code-line {
+        padding: 0 0.65rem;
+        border-radius: 4px;
+        transition: all 0.4s;
+        white-space: pre;
+      }
+
+      .code-line.hl {
+        background: #818cf812;
+        border-left: 3px solid #818cf8;
+        padding-left: calc(0.65rem - 3px);
+      }
+
+      .code-line.area-hl {
+        background: #facc1508;
+        border-left: 3px solid #facc15;
+        padding-left: calc(0.65rem - 3px);
+      }
+
+      .c-sel {
+        color: #c7d2fe;
+      }
+      .c-prop {
+        color: #94a3b8;
+      }
+      .c-val {
+        color: #34d399;
+      }
+      .c-pnc {
+        color: #475569;
+      }
+      .c-str {
+        color: #facc15;
+      }
+      .c-cmt {
+        color: #475569;
+        font-style: italic;
+      }
+
+      /* ── Insight ── */
+      .insight-card {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 14px;
+        padding: 1.25rem 1.5rem;
+      }
+
+      .insight-card h3 {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #64748b;
+        margin-bottom: 0.75rem;
+      }
+
+      .insight-text {
+        font-size: 0.88rem;
+        line-height: 1.75;
+        color: #cbd5e1;
+      }
+
+      .insight-text strong.pink {
+        color: #f472b6;
+      }
+      .insight-text strong.purple {
+        color: #a78bfa;
+      }
+      .insight-text strong.blue {
+        color: #38bdf8;
+      }
+      .insight-text strong.green {
+        color: #34d399;
+      }
+      .insight-text strong.yellow {
+        color: #facc15;
+      }
+
+      .insight-text code {
+        background: #0f172a;
+        padding: 0.12em 0.45em;
+        border-radius: 4px;
+        font-size: 0.84em;
+        color: #facc15;
+      }
+
+      /* ── What-changed badge ── */
+      .change-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.4rem 0.85rem;
+        border-radius: 8px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        margin-top: 0.75rem;
+      }
+
+      .change-badge.map-only {
+        background: #facc1515;
+        border: 1px solid #facc1533;
+        color: #fde68a;
+      }
+
+      .change-badge .badge-icon {
+        font-size: 1rem;
+      }
+
+      /* ── Child CSS card ── */
+      .child-css-card {
+        background: #0f172a;
+        border: 1px solid #1e293b;
+        border-radius: 10px;
+        padding: 0.85rem 1rem;
+        margin-top: 0.5rem;
+      }
+
+      .child-css-card h4 {
+        font-size: 0.62rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #475569;
+        margin-bottom: 0.5rem;
+      }
+
+      .child-css-card .code-block {
+        font-size: 0.72rem;
+        line-height: 1.9;
+      }
+
+      .child-unchanged {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-top: 0.5rem;
+        font-size: 0.7rem;
+        color: #34d399;
+        font-weight: 700;
+      }
+
+      /* ── Responsive ── */
+      @media (max-width: 900px) {
+        .demo-wrapper {
+          flex-direction: column;
+          align-items: center;
+        }
+        .code-panel {
+          max-width: 540px;
+          width: 100%;
+        }
+      }
+
+      @media (max-width: 520px) {
+        .preset-btn {
+          min-width: 90px;
+          padding: 0.5rem 0.8rem;
+          font-size: 0.75rem;
+        }
+        .mini-grid {
+          width: 42px;
+          height: 30px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🗺️ grid-template-areas</h1>
+    <p class="subtitle">
+      Draw your layout as a text map. Rearrange the entire page by editing
+      <strong style="color: #facc15">only the map</strong> — child elements
+      don't change at all.
+    </p>
+
+    <!-- Preset Buttons -->
+    <div class="presets" id="presets">
+      <!-- Filled by JS -->
+    </div>
+
+    <!-- Demo -->
+    <div class="demo-wrapper">
+      <!-- Visual Grid -->
+      <div class="grid-visual" id="gridVisual">
+        <span class="region-label">Grid Container</span>
+
+        <div class="grid-area-item area-header">
+          <span class="area-name">Header</span>
+          <span class="area-prop">grid-area: header</span>
+        </div>
+        <div class="grid-area-item area-sidebar">
+          <span class="area-name">Sidebar</span>
+          <span class="area-prop">grid-area: sidebar</span>
+        </div>
+        <div class="grid-area-item area-main">
+          <span class="area-name">Main</span>
+          <span class="area-prop">grid-area: main</span>
+        </div>
+        <div class="grid-area-item area-footer">
+          <span class="area-name">Footer</span>
+          <span class="area-prop">grid-area: footer</span>
+        </div>
+      </div>
+
+      <!-- Code + Insight -->
+      <div class="code-panel">
+        <div class="code-card">
+          <h3>Parent CSS — the map changes</h3>
+          <div class="code-block" id="parentCode"></div>
+
+          <div class="child-css-card">
+            <h4>Child CSS — never changes</h4>
+            <div class="code-block">
+              <div class="code-line">
+                <span class="c-sel">.header</span> <span class="c-pnc">{</span>
+                <span class="c-prop">grid-area:</span>
+                <span class="c-val">header</span><span class="c-pnc">;</span>
+                <span class="c-pnc">}</span>
+              </div>
+              <div class="code-line">
+                <span class="c-sel">.sidebar</span> <span class="c-pnc">{</span>
+                <span class="c-prop">grid-area:</span>
+                <span class="c-val">sidebar</span><span class="c-pnc">;</span>
+                <span class="c-pnc">}</span>
+              </div>
+              <div class="code-line">
+                <span class="c-sel">.main</span> <span class="c-pnc">{</span>
+                <span class="c-prop">grid-area:</span>
+                <span class="c-val">main</span><span class="c-pnc">;</span>
+                <span class="c-pnc">}</span>
+              </div>
+              <div class="code-line">
+                <span class="c-sel">.footer</span> <span class="c-pnc">{</span>
+                <span class="c-prop">grid-area:</span>
+                <span class="c-val">footer</span><span class="c-pnc">;</span>
+                <span class="c-pnc">}</span>
+              </div>
+            </div>
+            <div class="child-unchanged">
+              <span>🔒</span> Same across all layouts — children just declare
+              their name
+            </div>
+          </div>
+        </div>
+
+        <div class="insight-card">
+          <h3>What's happening</h3>
+          <div class="insight-text" id="insightText"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const gridVisual = document.getElementById("gridVisual");
+      const parentCode = document.getElementById("parentCode");
+      const insightText = document.getElementById("insightText");
+      const presetsContainer = document.getElementById("presets");
+
+      const layouts = [
+        {
+          name: "Holy Grail",
+          columns: "220px 1fr",
+          rows: "64px 1fr 56px",
+          areas: ["header  header", "sidebar main", "footer  footer"],
+          insight: `The classic <strong class="yellow">"Holy Grail"</strong> layout.
+                <strong class="pink">Header</strong> spans both columns across the top.
+                <strong class="purple">Sidebar</strong> sits left, <strong class="blue">Main</strong> fills the rest.
+                <strong class="green">Footer</strong> spans the full bottom.
+                This is the layout most web apps and dashboards start with.`,
+          miniCols: "1fr 2fr",
+          miniRows: "1fr 3fr 1fr",
+          miniAreas: '"h h" "s m" "f f"',
+        },
+        {
+          name: "Sidebar Right",
+          columns: "1fr 220px",
+          rows: "64px 1fr 56px",
+          areas: ["header  header", "main    sidebar", "footer  footer"],
+          insight: `Same regions, but the <strong class="yellow">map</strong> swapped <strong class="purple">Sidebar</strong> to the right column.
+                No child CSS changed — only the text in <code>grid-template-areas</code> was edited.
+                This is how you'd move a sidebar for an email client or settings panel layout.`,
+          miniCols: "2fr 1fr",
+          miniRows: "1fr 3fr 1fr",
+          miniAreas: '"h h" "m s" "f f"',
+        },
+        {
+          name: "Full Width Main",
+          columns: "1fr",
+          rows: "64px auto 1fr 56px",
+          areas: ["header", "sidebar", "main", "footer"],
+          insight: `A single-column stack — perfect for <strong class="yellow">mobile layouts</strong>.
+                Every region takes the full width. The <strong class="purple">Sidebar</strong> sits between header and main.
+                In responsive design, you'd switch to this map inside a <code>@media</code> query for small screens.`,
+          miniCols: "1fr",
+          miniRows: "1fr 1fr 2fr 1fr",
+          miniAreas: '"h" "s" "m" "f"',
+        },
+        {
+          name: "No Sidebar",
+          columns: "1fr",
+          rows: "64px 1fr 56px",
+          areas: ["header", "main", "footer"],
+          insight: `The <strong class="purple">Sidebar</strong> is missing from the map entirely — it's not rendered in any cell.
+                Elements whose <code>grid-area</code> name doesn't appear in the map are hidden from the grid flow.
+                This is a clean <strong class="yellow">content-focused</strong> layout: header, content, footer.`,
+          miniCols: "1fr",
+          miniRows: "1fr 3fr 1fr",
+          miniAreas: '"h" "m" "f"',
+        },
+        {
+          name: "Dashboard",
+          columns: "220px 1fr 1fr",
+          rows: "64px 1fr 56px",
+          areas: [
+            "header  header  header",
+            "sidebar main    main",
+            "sidebar footer  footer",
+          ],
+          insight: `A <strong class="yellow">dashboard</strong> layout. <strong class="purple">Sidebar</strong> spans two rows on the left — always visible for navigation.
+                <strong class="pink">Header</strong> stretches across all three columns.
+                <strong class="blue">Main</strong> and <strong class="green">Footer</strong> share the remaining space.
+                When a name repeats across rows, that region spans vertically.`,
+          miniCols: "1fr 2fr 2fr",
+          miniRows: "1fr 3fr 1fr",
+          miniAreas: '"h h h" "s m m" "s f f"',
+        },
+      ];
+
+      let currentIndex = 0;
+
+      // Build preset buttons
+      layouts.forEach((layout, i) => {
+        const btn = document.createElement("button");
+        btn.className = "preset-btn" + (i === 0 ? " active" : "");
+        btn.dataset.index = i;
+
+        // Mini preview
+        const mini = document.createElement("div");
+        mini.className = "mini-grid";
+        mini.style.gridTemplateColumns = layout.miniCols;
+        mini.style.gridTemplateRows = layout.miniRows;
+        mini.style.gridTemplateAreas = layout.miniAreas;
+
+        const areas = [
+          { cls: "m-h", area: "h" },
+          { cls: "m-s", area: "s" },
+          { cls: "m-m", area: "m" },
+          { cls: "m-f", area: "f" },
+        ];
+
+        areas.forEach((a) => {
+          // Check if area exists in the mini map
+          if (layout.miniAreas.includes(a.area)) {
+            const div = document.createElement("div");
+            div.className = a.cls;
+            div.style.gridArea = a.area;
+            mini.appendChild(div);
+          }
+        });
+
+        btn.appendChild(mini);
+
+        const label = document.createElement("span");
+        label.textContent = layout.name;
+        btn.appendChild(label);
+
+        btn.addEventListener("click", () => {
+          document
+            .querySelectorAll(".preset-btn")
+            .forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          currentIndex = i;
+          render();
+        });
+
+        presetsContainer.appendChild(btn);
+      });
+
+      function render() {
+        const layout = layouts[currentIndex];
+
+        // Apply grid styles
+        gridVisual.style.gridTemplateColumns = layout.columns;
+        gridVisual.style.gridTemplateRows = layout.rows;
+        gridVisual.style.gridTemplateAreas = layout.areas
+          .map((r) => `"${r}"`)
+          .join(" ");
+
+        // Show/hide sidebar if not in map
+        const sidebarEl = document.querySelector(".area-sidebar");
+        const allAreas = layout.areas.join(" ");
+        if (!allAreas.includes("sidebar")) {
+          sidebarEl.style.display = "none";
+        } else {
+          sidebarEl.style.display = "flex";
+        }
+
+        // Build code
+        const areaLines = layout.areas
+          .map((row) => {
+            const padded = `"${row}"`;
+            return `<div class="code-line area-hl">    <span class="c-str">${padded}</span></div>`;
+          })
+          .join("\n");
+
+        parentCode.innerHTML = `
+<div class="code-line"><span class="c-sel">.container</span> <span class="c-pnc">{</span></div>
+<div class="code-line hl">  <span class="c-prop">display:</span> <span class="c-val">grid</span><span class="c-pnc">;</span></div>
+<div class="code-line hl">  <span class="c-prop">grid-template-columns:</span> <span class="c-val">${layout.columns}</span><span class="c-pnc">;</span></div>
+<div class="code-line hl">  <span class="c-prop">grid-template-rows:</span> <span class="c-val">${layout.rows}</span><span class="c-pnc">;</span></div>
+<div class="code-line">  <span class="c-prop">grid-template-areas:</span></div>
+${areaLines}
+<div class="code-line">  <span class="c-prop">gap:</span> <span class="c-val">10px</span><span class="c-pnc">;</span></div>
+<div class="code-line"><span class="c-pnc">}</span></div>
+        `;
+
+        // Insight
+        insightText.innerHTML = `
+            ${layout.insight}
+            <div class="change-badge map-only">
+                <span class="badge-icon">✏️</span>
+                Only <code>grid-template-areas</code> changed — zero child CSS edits
+            </div>
+        `;
+      }
+
+      render();
+    </script>
+  </body>
+</html>

@@ -15,26 +15,80 @@
         border-radius: 4px;
       }
 
-      .grid-demo{
-        display:grid;
-        height:600px;
+      .grid-demo {
+        display: grid;
+        height: 600px;
         background-color: #e2e8f0;
         padding: 12px;
-        grid-template-columns: repeat(4, 1fr);
-        grid-template-rows: 1fr 2fr 1fr;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: 1fr 2fr;
         gap: 16px 32px;
         /* place-items: center; */
+      }
+
+      .page-layout {
+        display: grid;
+        grid-template-columns: 10vw 1fr 20vw;
+        grid-template-rows: 7vh 1fr 7vh;
+        grid-template-areas:
+          "header header header"
+          "sidebar main sidebar2"
+          "sidebar footer sidebar2";
+        gap: 8px;
+        height: 100vh;
+        background-color: #e2e8f0;
+        padding: 8px;
+        width: 100vw;
+      }
+
+      .page-header {
+        grid-area: header;
+        background-color: #1f2937;
+        color: white;
+        padding: 16px;
+      }
+      .page-sidebar {
+        grid-area: sidebar;
+        background-color: #2563eb;
+        color: white;
+        padding: 16px;
+      }
+
+      .page-sidebar2 {
+        grid-area: sidebar2;
+        background-color: #2563eb;
+        color: white;
+        padding: 16px;
+      }
+      .page-main {
+        grid-area: main;
+        background-color: #ffffff;
+        padding: 16px;
+      }
+      .page-footer {
+        grid-area: footer;
+        background-color: #1f2937;
+        color: white;
+        padding: 16px;
       }
     </style>
   </head>
   <body>
-    <div class="grid-demo">
+    <!-- <div class="grid-demo">
       <div class="grid-item">1</div>
       <div class="grid-item">2</div>
       <div class="grid-item">3</div>
       <div class="grid-item">4</div>
       <div class="grid-item">5</div>
       <div class="grid-item">6</div>
+    </div> -->
+
+    <div class="page-layout">
+      <header class="page-header">Header</header>
+      <aside class="page-sidebar">Side bar</aside>
+      <main class="page-main">Main content</main>
+      <aside class="page-sidebar2">Side bar</aside>
+      <footer class="page-footer">Footer</footer>
     </div>
   </body>
 </html>
