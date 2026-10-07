@@ -1,0 +1,832 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>width vs max-width</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", system-ui, sans-serif;
+        background: #f5f6fa;
+        color: #1e1e2e;
+        padding: 40px 24px;
+        min-height: 100vh;
+      }
+
+      .page {
+        max-width: 960px;
+        margin: 0 auto;
+      }
+
+      h1 {
+        font-size: 22px;
+        font-weight: 700;
+        text-align: center;
+        margin-bottom: 4px;
+        letter-spacing: -0.3px;
+      }
+      .subtitle {
+        text-align: center;
+        color: #6b7280;
+        font-size: 14px;
+        margin-bottom: 32px;
+      }
+
+      /* ---- Viewport Slider ---- */
+      .control-bar {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 16px 24px;
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .control-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #6b7280;
+        white-space: nowrap;
+      }
+      .control-bar input[type="range"] {
+        flex: 1;
+        -webkit-appearance: none;
+        appearance: none;
+        height: 6px;
+        border-radius: 3px;
+        background: #e5e7eb;
+        outline: none;
+      }
+      .control-bar input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #1e1e2e;
+        cursor: pointer;
+        border: 3px solid #fff;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+      }
+      .control-bar input[type="range"]::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #1e1e2e;
+        cursor: pointer;
+        border: 3px solid #fff;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+      }
+      .control-value {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 14px;
+        font-weight: 600;
+        min-width: 56px;
+        text-align: right;
+      }
+
+      .device-presets {
+        display: flex;
+        gap: 6px;
+      }
+      .preset-btn {
+        padding: 5px 12px;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        background: #fff;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        font-weight: 500;
+        color: #6b7280;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .preset-btn:hover {
+        border-color: #1e1e2e;
+        color: #1e1e2e;
+      }
+      .preset-btn.active {
+        background: #1e1e2e;
+        color: #fff;
+        border-color: #1e1e2e;
+      }
+
+      /* ---- Two Panels ---- */
+      .panels {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      @media (max-width: 760px) {
+        .panels {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .panel {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .panel-header {
+        padding: 14px 18px;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .panel-css {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .panel.fail .panel-css {
+        color: #dc2626;
+      }
+      .panel.pass .panel-css {
+        color: #16a34a;
+      }
+
+      .panel-badge {
+        font-size: 11px;
+        font-weight: 600;
+        padding: 3px 10px;
+        border-radius: 20px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .panel.fail .panel-badge {
+        background: #fef2f2;
+        color: #dc2626;
+      }
+      .panel.pass .panel-badge {
+        background: #f0fdf4;
+        color: #16a34a;
+      }
+
+      /* ---- Browser Chrome ---- */
+      .browser {
+        margin: 16px;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        overflow: hidden;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+      .browser-bar {
+        height: 32px;
+        background: #f9fafb;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        padding: 0 12px;
+        gap: 6px;
+        flex-shrink: 0;
+      }
+      .browser-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+      }
+      .dot-r {
+        background: #fca5a5;
+      }
+      .dot-y {
+        background: #fde68a;
+      }
+      .dot-g {
+        background: #86efac;
+      }
+
+      .browser-url {
+        margin-left: 8px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 10px;
+        color: #9ca3af;
+        background: #fff;
+        padding: 3px 10px;
+        border-radius: 4px;
+        border: 1px solid #e5e7eb;
+        flex: 1;
+      }
+
+      /* ---- Viewport ---- */
+      .viewport-clip {
+        flex: 1;
+        overflow: hidden;
+        position: relative;
+        min-height: 280px;
+      }
+      .viewport {
+        height: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        position: relative;
+        transition: width 0.3s ease;
+        border-right: 2px dashed transparent;
+      }
+      .viewport.overflowing {
+        border-right-color: #fca5a5;
+      }
+      .viewport.fitting {
+        border-right-color: transparent;
+      }
+
+      .viewport::-webkit-scrollbar {
+        height: 10px;
+      }
+      .viewport::-webkit-scrollbar-track {
+        background: #f1f5f9;
+      }
+      .viewport::-webkit-scrollbar-thumb {
+        background: #dc2626;
+        border-radius: 5px;
+      }
+      .viewport::-webkit-scrollbar-thumb:hover {
+        background: #b91c1c;
+      }
+      .viewport.no-overflow {
+        overflow-x: hidden !important;
+      }
+
+      /* ---- The actual container being demonstrated ---- */
+      .demo-container {
+        padding: 20px;
+        min-height: 260px;
+      }
+
+      .demo-container.use-width {
+        width: 900px;
+      }
+      .demo-container.use-maxwidth {
+        max-width: 900px;
+        overflow: hidden;
+      }
+
+      /* ---- Fake page content ---- */
+      .fake-nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        padding-bottom: 14px;
+        border-bottom: 1px solid #f1f5f9;
+        overflow: hidden;
+      }
+      .fake-logo {
+        font-weight: 700;
+        font-size: 15px;
+        color: #1e1e2e;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .logo-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 3px;
+      }
+      .panel.fail .logo-dot {
+        background: #dc2626;
+      }
+      .panel.pass .logo-dot {
+        background: #16a34a;
+      }
+
+      .fake-nav-links {
+        display: flex;
+        gap: 16px;
+      }
+      .fake-nav-link {
+        width: 48px;
+        height: 8px;
+        background: #e5e7eb;
+        border-radius: 4px;
+      }
+
+      .fake-hero {
+        border-radius: 8px;
+        padding: 24px;
+        margin-bottom: 16px;
+      }
+      .panel.fail .fake-hero {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+      }
+      .panel.pass .fake-hero {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+      }
+
+      .fake-title {
+        height: 14px;
+        border-radius: 4px;
+        margin-bottom: 10px;
+        width: 70%;
+      }
+      .panel.fail .fake-title {
+        background: #fca5a5;
+      }
+      .panel.pass .fake-title {
+        background: #86efac;
+      }
+
+      .fake-text {
+        height: 8px;
+        border-radius: 4px;
+        margin-bottom: 8px;
+        background: #e5e7eb;
+      }
+
+      .fake-cards {
+        display: flex;
+        gap: 12px;
+      }
+      .use-maxwidth .fake-cards {
+        flex-wrap: wrap;
+      }
+      .fake-card {
+        flex: 1;
+        min-width: 100px;
+        border-radius: 8px;
+        padding: 16px;
+        border: 1px solid #e5e7eb;
+        background: #f9fafb;
+      }
+      .fake-card-img {
+        height: 48px;
+        border-radius: 6px;
+        margin-bottom: 10px;
+      }
+      .panel.fail .fake-card-img {
+        background: #fee2e2;
+      }
+      .panel.pass .fake-card-img {
+        background: #dcfce7;
+      }
+      .fake-card-line {
+        height: 7px;
+        border-radius: 4px;
+        background: #e5e7eb;
+        margin-bottom: 6px;
+      }
+
+      /* ---- Dimension readout ---- */
+      .readout {
+        padding: 12px 18px;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+      }
+      .readout-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .readout-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+      }
+      .readout-label {
+        color: #9ca3af;
+      }
+      .readout-val {
+        font-weight: 600;
+      }
+
+      .readout-arrow {
+        color: #9ca3af;
+      }
+
+      .readout-result {
+        margin-left: auto;
+        padding: 3px 10px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 11px;
+      }
+      .panel.fail .readout-result {
+        background: #fef2f2;
+        color: #dc2626;
+      }
+      .panel.pass .readout-result {
+        background: #f0fdf4;
+        color: #16a34a;
+      }
+
+      /* ---- Scroll indicator overlay ---- */
+      .scroll-overlay {
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 36px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(220, 38, 38, 0.08)
+        );
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      .scroll-overlay.show {
+        opacity: 1;
+      }
+
+      /* ---- Viewport edge marker ---- */
+      .viewport-edge {
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        pointer-events: none;
+        transition: opacity 0.3s;
+      }
+      .viewport-edge::after {
+        content: attr(data-label);
+        position: absolute;
+        top: 8px;
+        right: 6px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 9px;
+        font-weight: 600;
+        white-space: nowrap;
+        padding: 2px 5px;
+        border-radius: 3px;
+      }
+      .panel.fail .viewport-edge {
+        background: #dc2626;
+      }
+      .panel.fail .viewport-edge::after {
+        color: #dc2626;
+        background: #fef2f2;
+      }
+      .panel.pass .viewport-edge {
+        background: #16a34a;
+      }
+      .panel.pass .viewport-edge::after {
+        color: #16a34a;
+        background: #f0fdf4;
+      }
+
+      /* ---- Bottom takeaway ---- */
+      .takeaway {
+        margin-top: 24px;
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 20px 24px;
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+      }
+      .takeaway-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: #f0fdf4;
+        color: #16a34a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+      .takeaway-text {
+        font-size: 14px;
+        color: #374151;
+        line-height: 1.6;
+      }
+      .takeaway-text code {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        font-weight: 600;
+        background: #f0fdf4;
+        color: #16a34a;
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
+      .takeaway-text code.bad {
+        background: #fef2f2;
+        color: #dc2626;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>width vs max-width</h1>
+      <p class="subtitle">
+        Drag the slider to simulate different screen sizes and watch what
+        happens.
+      </p>
+
+      <div class="control-bar">
+        <span class="control-label">Screen width</span>
+        <div class="device-presets">
+          <button class="preset-btn" onclick="setViewport(390)">Phone</button>
+          <button class="preset-btn" onclick="setViewport(768)">Tablet</button>
+          <button class="preset-btn active" onclick="setViewport(1024)">
+            Desktop
+          </button>
+        </div>
+        <input
+          type="range"
+          id="slider"
+          min="280"
+          max="1024"
+          value="1024"
+          step="1"
+          oninput="updateViewport(this.value)"
+        />
+        <span class="control-value" id="sliderVal">1024px</span>
+      </div>
+
+      <div class="panels">
+        <!-- LEFT: width: 900px -->
+        <div class="panel fail">
+          <div class="panel-header">
+            <span class="panel-css">width: 900px</span>
+            <span class="panel-badge" id="badge-left">no overflow</span>
+          </div>
+          <div class="browser">
+            <div class="browser-bar">
+              <div class="browser-dot dot-r"></div>
+              <div class="browser-dot dot-y"></div>
+              <div class="browser-dot dot-g"></div>
+              <div class="browser-url">mysite.com</div>
+            </div>
+            <div class="viewport-clip">
+              <div class="viewport" id="vp-left" style="width: 100%">
+                <div class="demo-container use-width">
+                  <div class="fake-nav">
+                    <div class="fake-logo">
+                      <div class="logo-dot"></div>
+                      MySite
+                    </div>
+                    <div class="fake-nav-links">
+                      <div class="fake-nav-link"></div>
+                      <div class="fake-nav-link"></div>
+                      <div class="fake-nav-link"></div>
+                    </div>
+                  </div>
+                  <div class="fake-hero">
+                    <div class="fake-title"></div>
+                    <div class="fake-text" style="width: 90%"></div>
+                    <div class="fake-text" style="width: 75%"></div>
+                  </div>
+                  <div class="fake-cards">
+                    <div class="fake-card">
+                      <div class="fake-card-img"></div>
+                      <div class="fake-card-line" style="width: 80%"></div>
+                      <div class="fake-card-line" style="width: 60%"></div>
+                    </div>
+                    <div class="fake-card">
+                      <div class="fake-card-img"></div>
+                      <div class="fake-card-line" style="width: 70%"></div>
+                      <div class="fake-card-line" style="width: 90%"></div>
+                    </div>
+                    <div class="fake-card">
+                      <div class="fake-card-img"></div>
+                      <div class="fake-card-line" style="width: 85%"></div>
+                      <div class="fake-card-line" style="width: 50%"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="scroll-overlay" id="scroll-overlay-left"></div>
+                <div
+                  class="viewport-edge"
+                  id="edge-left"
+                  data-label="viewport edge"
+                  style="opacity: 0"
+                ></div>
+              </div>
+            </div>
+          </div>
+          <div class="readout">
+            <div class="readout-item">
+              <div class="readout-dot" style="background: #9ca3af"></div>
+              <span class="readout-label">viewport:</span>
+              <span class="readout-val" id="ro-vp-left">1024px</span>
+            </div>
+            <span class="readout-arrow">&rarr;</span>
+            <div class="readout-item">
+              <div class="readout-dot" style="background: #dc2626"></div>
+              <span class="readout-label">container:</span>
+              <span class="readout-val" id="ro-ct-left">900px</span>
+            </div>
+            <span class="readout-result" id="result-left">fits</span>
+          </div>
+        </div>
+
+        <!-- RIGHT: max-width: 900px -->
+        <div class="panel pass">
+          <div class="panel-header">
+            <span class="panel-css">max-width: 900px</span>
+            <span class="panel-badge" id="badge-right">no overflow</span>
+          </div>
+          <div class="browser">
+            <div class="browser-bar">
+              <div class="browser-dot dot-r"></div>
+              <div class="browser-dot dot-y"></div>
+              <div class="browser-dot dot-g"></div>
+              <div class="browser-url">mysite.com</div>
+            </div>
+            <div class="viewport-clip">
+              <div
+                class="viewport no-overflow"
+                id="vp-right"
+                style="width: 100%"
+              >
+                <div class="demo-container use-maxwidth">
+                  <div class="fake-nav">
+                    <div class="fake-logo">
+                      <div class="logo-dot"></div>
+                      MySite
+                    </div>
+                    <div class="fake-nav-links">
+                      <div class="fake-nav-link"></div>
+                      <div class="fake-nav-link"></div>
+                      <div class="fake-nav-link"></div>
+                    </div>
+                  </div>
+                  <div class="fake-hero">
+                    <div class="fake-title"></div>
+                    <div class="fake-text" style="width: 90%"></div>
+                    <div class="fake-text" style="width: 75%"></div>
+                  </div>
+                  <div class="fake-cards">
+                    <div class="fake-card">
+                      <div class="fake-card-img"></div>
+                      <div class="fake-card-line" style="width: 80%"></div>
+                      <div class="fake-card-line" style="width: 60%"></div>
+                    </div>
+                    <div class="fake-card">
+                      <div class="fake-card-img"></div>
+                      <div class="fake-card-line" style="width: 70%"></div>
+                      <div class="fake-card-line" style="width: 90%"></div>
+                    </div>
+                    <div class="fake-card">
+                      <div class="fake-card-img"></div>
+                      <div class="fake-card-line" style="width: 85%"></div>
+                      <div class="fake-card-line" style="width: 50%"></div>
+                    </div>
+                  </div>
+                </div>
+                <div
+                  class="viewport-edge"
+                  id="edge-right"
+                  data-label="viewport edge"
+                  style="opacity: 0"
+                ></div>
+              </div>
+            </div>
+          </div>
+          <div class="readout">
+            <div class="readout-item">
+              <div class="readout-dot" style="background: #9ca3af"></div>
+              <span class="readout-label">viewport:</span>
+              <span class="readout-val" id="ro-vp-right">1024px</span>
+            </div>
+            <span class="readout-arrow">&rarr;</span>
+            <div class="readout-item">
+              <div class="readout-dot" style="background: #16a34a"></div>
+              <span class="readout-label">container:</span>
+              <span class="readout-val" id="ro-ct-right">900px</span>
+            </div>
+            <span class="readout-result" id="result-right">fits</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="takeaway">
+        <div class="takeaway-icon">&#10003;</div>
+        <div class="takeaway-text">
+          <code class="bad">width: 900px</code> forces the container to always
+          be 900px, even when the screen is smaller. This causes a horizontal
+          scrollbar.<br /><br />
+          <code>max-width: 900px</code> says "be 900px at most, but shrink if
+          needed." The container adapts to the available space. No overflow, no
+          scrollbar.
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const vpLeft = document.getElementById("vp-left");
+      const vpRight = document.getElementById("vp-right");
+      const slider = document.getElementById("slider");
+
+      function updateViewport(val) {
+        val = parseInt(val);
+        document.getElementById("sliderVal").textContent = val + "px";
+
+        // Scale the viewport to a proportional width within the panel
+        // The panel's browser area is roughly 430px wide at max
+        // We map 280-1024 input to a percentage of the panel
+        const pct = (val / 1024) * 100;
+
+        vpLeft.style.width = pct + "%";
+        vpRight.style.width = pct + "%";
+
+        // Calculate effective container widths
+        const leftVpPx = vpLeft.offsetWidth;
+        const rightVpPx = vpRight.offsetWidth;
+
+        // Left panel: width: 900px always
+        // The container is always 900px, viewport clips it
+        const leftContainerPx = 900;
+        const leftOverflow = leftVpPx < leftContainerPx + 40; // 40 for padding
+
+        // Effective rendered width in the right panel
+        const rightContainerPx = Math.min(900, rightVpPx - 40);
+
+        // Update readouts
+        document.getElementById("ro-vp-left").textContent = val + "px";
+        document.getElementById("ro-ct-left").textContent = "900px";
+        document.getElementById("ro-vp-right").textContent = val + "px";
+        document.getElementById("ro-ct-right").textContent =
+          Math.min(900, Math.max(0, val - 40)) + "px";
+
+        // Left panel overflow state
+        const scrollOverlay = document.getElementById("scroll-overlay-left");
+        const edgeLeft = document.getElementById("edge-left");
+        const badgeLeft = document.getElementById("badge-left");
+        const resultLeft = document.getElementById("result-left");
+
+        if (leftOverflow) {
+          vpLeft.classList.add("overflowing");
+          vpLeft.classList.remove("no-overflow");
+          scrollOverlay.classList.add("show");
+          edgeLeft.style.opacity = "1";
+          badgeLeft.textContent = "overflows \u2192";
+          resultLeft.textContent = "scrollbar!";
+        } else {
+          vpLeft.classList.remove("overflowing");
+          vpLeft.classList.add("no-overflow");
+          scrollOverlay.classList.remove("show");
+          edgeLeft.style.opacity = "0";
+          badgeLeft.textContent = "no overflow";
+          resultLeft.textContent = "fits";
+        }
+
+        // Right panel never overflows
+        const edgeRight = document.getElementById("edge-right");
+        const badgeRight = document.getElementById("badge-right");
+        const resultRight = document.getElementById("result-right");
+
+        if (val < 940) {
+          edgeRight.style.opacity = "1";
+          badgeRight.textContent = "adapts \u2713";
+          resultRight.textContent = "adapts";
+        } else {
+          edgeRight.style.opacity = "0";
+          badgeRight.textContent = "no overflow";
+          resultRight.textContent = "fits";
+        }
+
+        // Preset buttons
+        document
+          .querySelectorAll(".preset-btn")
+          .forEach((b) => b.classList.remove("active"));
+        if (val === 390)
+          document.querySelectorAll(".preset-btn")[0].classList.add("active");
+        else if (val === 768)
+          document.querySelectorAll(".preset-btn")[1].classList.add("active");
+        else if (val === 1024)
+          document.querySelectorAll(".preset-btn")[2].classList.add("active");
+      }
+
+      function setViewport(val) {
+        slider.value = val;
+        updateViewport(val);
+      }
+
+      // Init
+      updateViewport(1024);
+    </script>
+  </body>
+</html>

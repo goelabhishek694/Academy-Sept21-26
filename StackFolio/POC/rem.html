@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<style>
+    *{
+        font-size:24px;
+    }
+    body {
+  text-align: center;
+}
+
+div {
+  font-size: 1.15rem;
+}
+
+span {
+  font-size: 2rem;
+}
+
+.p {
+  font-size: 14px;
+  padding-top: 130px;
+}
+
+.box{
+    height: 10rem;
+    width: 10rem;
+    background-color: red;
+}
+
+button { font-size: 1rem; padding: 0.5em 1em } in this case what happened?
+
+</style>
+<body>
+    <h1>Basic rem unit example</h1>
+
+<p>The elements below are <code>div</code>s nested inside each other.
+  <br>They all have a font size of <code>1.15rem</code>. Despite being nested, they aren't affected, unlike ems.
+  <br>The last element is a <code>span</code> inside the last <code>div</code>, set to <code>2rem</code>.</p>
+<div>
+  <p>Font size &ndash; 18.3999996185303px</p>
+  <div>
+    <p>Font size &ndash; 18.3999996185303px</p>
+    <div>
+      <p>Font size &ndash; 18.3999996185303px
+        <br><br><span> Font size &ndash; 32px</span></p>
+    </div>
+    <div class="box"></div>
+  </div>
+</div>
+
+<p class="p">Demo by Gajendar Singh. <a href="http://www.sitepoint.com/look-at-length-units-in-css" target="_blank">See article</a>.</p>
+</body>
+</html>

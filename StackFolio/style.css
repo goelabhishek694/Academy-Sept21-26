@@ -36,10 +36,23 @@ h3{
     color: aqua;
 } */
 
+/* main {
+  max-width: var(--main-max-width);
+  margin: var(--space-9) auto;
+  padding: var(--space-0) var(--space-7);
+} */
+
 :root {
   --color-primary: #2563eb;
   --color-text: #1f2937;
   --color-bg: #f8fafc;
+  --font-size-sm: 14px;
+  --font-size-base: 16px;
+  --font-size-lg: 20px;
+  --font-size-xl: 32px;
+  --space-3: 8px;
+  --space-7: 16px;
+  --space-9: 24px;
 }
 
 * {
