@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      /* .family p{
+        color: red;
+      }
+
+      .family>p{
+        color: lightblue;
+      } */
+
+      /* adjacent sibling combinator */
+      h2 + ul {
+        color: rgb(51, 142, 31);
+      }
+
+      /* general sibling combinator */
+      h2 ~ ul {
+        color: lightpink;
+      }
+
+      h2{
+        color: green !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="family">
+      <h2 style="color: red;">The Family Title</h2>
+      <ul class="members">
+        <li class="person">Alice</li>
+        <li class="person">Bob</li>
+        <li class="person">Carol</li>
+      </ul>
+
+      <ul class="members">
+        <li class="person">Alice</li>
+        <li class="person">Bob</li>
+        <li class="person">Carol</li>
+      </ul>
+      <p class="note">A note about the family.</p>
+      <div>
+        <p>2 level deep</p>
+      </div>
+    </div>
+  </body>
+</html>
+
+<div class="skills">
+  <h2>My Skills</h2>
+  <div class="skills__list">
+    <span class="skill-badge">HTML</span>
+    <span class="skill-badge">CSS</span>
+  </div>
+  <p>More skills coming soon...</p>
+</div>
+
+.skills>p h2+p .skills_list+p
+
+<!-- descendant combinator  -->
+.project-card p{}
+
+<!-- child combinator -->
+.project-card>p{}
+
+<div class="project-card">
+  <div>
+    <p></p>
+  </div>
+</div>
+
+<div>
+  <h2></h2>
+  <p></p>
+  <p></p>
+</div>
+
+h2~p{
+
+}
