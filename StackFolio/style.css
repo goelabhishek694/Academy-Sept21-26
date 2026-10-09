@@ -96,6 +96,17 @@ nav a {
   text-decoration: none;
   color: #f6f7f8;
 }
+nav a:hover{
+  color: lightseagreen;
+  text-decoration: none;
+  transition: color 6s ease;
+}
+
+nav a:focus{
+  outline: 2px solid white;
+  outline-offset: 4px;
+
+}
 
 nav {
   display: flex;
@@ -197,6 +208,16 @@ button {
   position: relative;
 }
 
+.project-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  
+  /* position: relative;
+  top: -10px; */
+  /* transform: translateY(-10px); */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease;
+}
+
 .project-card h3 {
   margin-top: 0;
   margin-bottom: 8px;
@@ -238,6 +259,27 @@ button {
   justify-content: space-between;
   align-items: center;
 }
+
+button[type="submit"]:hover {
+  background-color: pink;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+
+}
+
+button[type="submit"]:focus {
+  outline: 2px solid red;
+  outline-offset:4px;
+
+}
+
+button[type="submit"]:active {
+  background-color: #1a45bd;
+  transform: translateY(10px);
+
+
+}
+
+
 
 /* mobile first approach */
 

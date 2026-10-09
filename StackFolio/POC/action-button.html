@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Button States</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            background: #09090b;
+            color: #e4e4e7;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 720px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* ── HEADER ── */
+        .header {
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #fafafa;
+            letter-spacing: -0.02em;
+        }
+
+        .header p {
+            font-size: 0.82rem;
+            color: #52525b;
+            margin-top: 4px;
+        }
+
+        /* ── SHOWCASE ── */
+        .showcase {
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 48px 24px 36px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .showcase::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(#27272a22 1px, transparent 1px),
+                linear-gradient(90deg, #27272a22 1px, transparent 1px);
+            background-size: 24px 24px;
+            pointer-events: none;
+        }
+
+        .state-label {
+            font-size: 0.68rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2.5px;
+            padding: 5px 16px;
+            border-radius: 100px;
+            margin-bottom: 28px;
+            transition: all 0.4s;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── BUTTON AREA (holds cursor + button) ── */
+        .btn-zone {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px 60px;
+        }
+
+        .demo-btn {
+            padding: 14px 44px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.35s cubic-bezier(.4, 0, .2, 1);
+            position: relative;
+            z-index: 1;
+            outline: none;
+        }
+
+        /* states */
+        .demo-btn.s-default {
+            background: #fff;
+            color: #09090b;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .demo-btn.s-hover {
+            background: #e0f2fe;
+            color: #0c4a6e;
+            box-shadow: 0 6px 28px rgba(56, 189, 248, 0.2), 0 12px 40px rgba(0, 0, 0, 0.25);
+            transform: translateY(-3px) scale(1.03);
+        }
+
+        .demo-btn.s-focus {
+            background: #fff;
+            color: #09090b;
+            box-shadow: 0 0 0 2px #09090b, 0 0 0 5px #a78bfa;
+        }
+
+        .demo-btn.s-active {
+            background: #d4d4d8;
+            color: #09090b;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            transform: translateY(1px) scale(0.97);
+        }
+
+        /* ── INLINE CURSOR (lives next to button) ── */
+        .inline-cursor {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translate(-10px, -50%);
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(.4, 0, .2, 1);
+            pointer-events: none;
+            filter: drop-shadow(0 0 8px rgba(250, 250, 250, 0.4));
+        }
+
+        .inline-cursor.show {
+            opacity: 1;
+        }
+
+        .inline-cursor.on-btn {
+            left: calc(50% - 34px);
+            top: calc(50% - 12px);
+            transform: translate(0, 0);
+        }
+
+        .inline-cursor svg {
+            width: 32px;
+            height: 32px;
+        }
+
+        /* ── STATE DESC ── */
+        .state-desc {
+            text-align: center;
+            margin-top: 28px;
+            max-width: 400px;
+            position: relative;
+            z-index: 1;
+            min-height: 44px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .state-desc .trigger {
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            transition: color 0.3s;
+        }
+
+        .state-desc .explain {
+            font-size: 0.82rem;
+            color: #71717a;
+            line-height: 1.55;
+            transition: color 0.3s;
+        }
+
+        /* ── TIMELINE ── */
+        .timeline {
+            display: flex;
+            align-items: center;
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 12px;
+            padding: 4px;
+            gap: 2px;
+        }
+
+        .tl-btn {
+            flex: 1;
+            padding: 10px 8px;
+            border: none;
+            border-radius: 9px;
+            background: transparent;
+            color: #71717a;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+            text-align: center;
+        }
+
+        .tl-btn:hover {
+            color: #a1a1aa;
+        }
+
+        .tl-btn.active {
+            background: #27272a;
+            color: #fafafa;
+        }
+
+        .tl-btn .tl-num {
+            display: block;
+            font-size: 0.65rem;
+            font-weight: 400;
+            color: #52525b;
+            margin-bottom: 2px;
+        }
+
+        .tl-btn.active .tl-num {
+            color: #71717a;
+        }
+
+        .tl-btn::after {
+            content: '';
+            display: block;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: #3f3f46;
+            margin: 6px auto 0;
+            transition: all 0.3s;
+        }
+
+        .tl-btn.active::after {
+            width: 16px;
+            border-radius: 3px;
+        }
+
+        /* ── CONTROLS ── */
+        .controls {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .ctrl-group {
+            display: flex;
+            gap: 4px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .ctrl-group.sims {
+            flex: 1.5;
+        }
+
+        .ctrl-btn {
+            flex: 1;
+            padding: 10px 8px;
+            border: 1px solid #27272a;
+            border-radius: 10px;
+            background: #18181b;
+            color: #71717a;
+            font-size: 0.74rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .ctrl-btn:hover {
+            border-color: #3f3f46;
+            color: #a1a1aa;
+            background: #1f1f23;
+        }
+
+        .ctrl-btn.active {
+            border-color: #a78bfa;
+            color: #a78bfa;
+            background: #a78bfa11;
+        }
+
+        .ctrl-btn .ctrl-label {
+            display: block;
+            font-size: 0.62rem;
+            font-weight: 400;
+            color: #3f3f46;
+            margin-bottom: 2px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .ctrl-btn.active .ctrl-label {
+            color: #a78bfa66;
+        }
+
+        /* ── CODE PANEL ── */
+        .code-panel {
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .code-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 18px;
+            border-bottom: 1px solid #27272a;
+        }
+
+        .code-header span {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: #52525b;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .code-dots {
+            display: flex;
+            gap: 5px;
+        }
+
+        .code-dots i {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #27272a;
+        }
+
+        .code-body {
+            padding: 18px;
+            font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+            font-size: 0.8rem;
+            line-height: 1.9;
+            overflow-x: auto;
+            min-height: 130px;
+            transition: opacity 0.3s;
+        }
+
+        .code-body .sel {
+            color: #c084fc;
+        }
+
+        .code-body .prop {
+            color: #93c5fd;
+        }
+
+        .code-body .val {
+            color: #fcd34d;
+        }
+
+        .code-body .cmt {
+            color: #3f3f46;
+        }
+
+        .code-body .br {
+            color: #52525b;
+        }
+
+        @media(max-width:600px) {
+            .controls {
+                flex-direction: column;
+            }
+
+            .ctrl-group {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <div class="header">
+            <h1>Button Interaction States</h1>
+            <p>How a single button responds to different user actions</p>
+        </div>
+
+        <!-- SHOWCASE -->
+        <div class="showcase">
+            <div class="state-label" id="stateLabel">DEFAULT</div>
+
+            <div class="btn-zone" id="btnZone">
+                <!-- inline cursor -->
+                <div class="inline-cursor" id="cursor">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M5 3l14 8-6.5 2L9 19.5 5 3z" fill="#fafafa" stroke="#a1a1aa" stroke-width="0.8" />
+                        <path d="M5 3l14 8-6.5 2L9 19.5 5 3z" fill="none" stroke="#ffffff" stroke-width="0.3" />
+                    </svg>
+                </div>
+                <button class="demo-btn s-default" id="demoBtn">Send Message</button>
+            </div>
+
+            <div class="state-desc">
+                <span class="trigger" id="triggerText">No interaction</span>
+                <span class="explain" id="explainText">Resting state — the button waits for user input</span>
+            </div>
+        </div>
+
+        <!-- TIMELINE -->
+        <div class="timeline">
+            <button class="tl-btn active" onclick="go(0)"><span class="tl-num">01</span>Default</button>
+            <button class="tl-btn" onclick="go(1)"><span class="tl-num">02</span>Hover</button>
+            <button class="tl-btn" onclick="go(2)"><span class="tl-num">03</span>Focus</button>
+            <button class="tl-btn" onclick="go(3)"><span class="tl-num">04</span>Active</button>
+        </div>
+
+        <!-- CONTROLS -->
+        <div class="controls">
+            <div class="ctrl-group sims">
+                <button class="ctrl-btn" onclick="simHover()">
+                    <span class="ctrl-label">simulate</span>Hover
+                </button>
+                <button class="ctrl-btn" onclick="simTab()">
+                    <span class="ctrl-label">simulate</span>Tab
+                </button>
+                <button class="ctrl-btn" onclick="simClick()">
+                    <span class="ctrl-label">simulate</span>Click
+                </button>
+                <button class="ctrl-btn" onclick="simFull()">
+                    <span class="ctrl-label">simulate</span>Full Journey
+                </button>
+            </div>
+            <div class="ctrl-group">
+                <button class="ctrl-btn" id="playBtn" onclick="togglePlay()">
+                    <span class="ctrl-label">auto</span>Cycle
+                </button>
+                <button class="ctrl-btn" id="sp1" onclick="spd(2800)">
+                    <span class="ctrl-label">speed</span>Slow
+                </button>
+                <button class="ctrl-btn active" id="sp2" onclick="spd(1600)">
+                    <span class="ctrl-label">speed</span>Normal
+                </button>
+                <button class="ctrl-btn" id="sp3" onclick="spd(700)">
+                    <span class="ctrl-label">speed</span>Fast
+                </button>
+            </div>
+        </div>
+
+        <!-- CODE -->
+        <div class="code-panel">
+            <div class="code-header">
+                <div class="code-dots"><i></i><i></i><i></i></div>
+                <span>css</span>
+            </div>
+            <div class="code-body" id="codeBody"></div>
+        </div>
+
+    </div>
+
+    <script>
+        const btn = document.getElementById('demoBtn');
+        const stateLabel = document.getElementById('stateLabel');
+        const triggerTxt = document.getElementById('triggerText');
+        const explainTxt = document.getElementById('explainText');
+        const codeBody = document.getElementById('codeBody');
+        const cursor = document.getElementById('cursor');
+        const playBtn = document.getElementById('playBtn');
+        const tlBtns = document.querySelectorAll('.tl-btn');
+
+        const DATA = [
+            {
+                cls: 's-default', name: 'DEFAULT',
+                color: '#a1a1aa', labelBg: '#27272a',
+                trigger: 'No interaction',
+                explain: 'Resting state — the button waits for user input.',
+                showCursor: false,
+                code: `<span class="sel">.btn</span> <span class="br">{</span>
+  <span class="prop">background</span>: <span class="val">#ffffff</span>;
+  <span class="prop">color</span>: <span class="val">#09090b</span>;
+  <span class="prop">box-shadow</span>: <span class="val">0 1px 3px rgba(0,0,0,0.3)</span>;
+<span class="br">}</span>`
+            },
+            {
+                cls: 's-hover', name: 'HOVER',
+                color: '#38bdf8', labelBg: '#0c4a6e',
+                trigger: 'Cursor enters the button',
+                explain: 'Background tints blue, shadow expands, button lifts — confirms interactivity.',
+                showCursor: true,
+                code: `<span class="sel">.btn</span><span class="sel">:hover</span> <span class="br">{</span>
+  <span class="prop">background</span>: <span class="val">#e0f2fe</span>;  <span class="cmt">/* light blue tint */</span>
+  <span class="prop">color</span>: <span class="val">#0c4a6e</span>;
+  <span class="prop">box-shadow</span>: <span class="val">0 6px 28px rgba(56,189,248,0.2)</span>;
+  <span class="prop">transform</span>: <span class="val">translateY(-3px) scale(1.03)</span>;
+<span class="br">}</span>`
+            },
+            {
+                cls: 's-focus', name: 'FOCUS',
+                color: '#a78bfa', labelBg: '#2e1065',
+                trigger: 'Tab key reaches this element',
+                explain: 'A visible ring appears — essential for keyboard navigation and accessibility.',
+                showCursor: false,
+                code: `<span class="sel">.btn</span><span class="sel">:focus-visible</span> <span class="br">{</span>
+  <span class="prop">outline</span>: <span class="val">none</span>;
+  <span class="prop">box-shadow</span>:
+    <span class="val">0 0 0 2px #09090b</span>, <span class="cmt">/* gap */</span>
+    <span class="val">0 0 0 5px #a78bfa</span>; <span class="cmt">/* ring */</span>
+<span class="br">}</span>`
+            },
+            {
+                cls: 's-active', name: 'ACTIVE',
+                color: '#fbbf24', labelBg: '#451a03',
+                trigger: 'Mouse button / finger held down',
+                explain: 'Button compresses inward — mimics a physical press. Only lasts while held.',
+                showCursor: true,
+                code: `<span class="sel">.btn</span><span class="sel">:active</span> <span class="br">{</span>
+  <span class="prop">background</span>: <span class="val">#d4d4d8</span>;
+  <span class="prop">transform</span>: <span class="val">translateY(1px) scale(0.97)</span>;
+  <span class="prop">box-shadow</span>: <span class="val">0 1px 2px rgba(0,0,0,0.3)</span>;
+<span class="br">}</span>`
+            }
+        ];
+
+        let cur = 0, playing = false, iv = null, speed = 1600, locked = false;
+
+        function go(i) {
+            cur = i; render();
+        }
+
+        function render() {
+            const d = DATA[cur];
+            btn.className = 'demo-btn ' + d.cls;
+            stateLabel.textContent = d.name;
+            stateLabel.style.background = d.labelBg;
+            stateLabel.style.color = d.color;
+            triggerTxt.textContent = d.trigger;
+            triggerTxt.style.color = d.color;
+            explainTxt.textContent = d.explain;
+            codeBody.innerHTML = d.code;
+            tlBtns.forEach((b, i) => b.classList.toggle('active', i === cur));
+
+            // cursor visibility
+            if (d.showCursor) {
+                cursor.classList.add('show', 'on-btn');
+            } else {
+                cursor.classList.remove('show', 'on-btn');
+            }
+        }
+
+        function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+        // ── SIMULATIONS ──
+        async function simHover() {
+            if (locked) return; locked = true; stopPlay();
+            go(0);
+            await wait(300);
+            // cursor slides in
+            cursor.classList.remove('on-btn');
+            cursor.classList.add('show');
+            await wait(50);
+            cursor.classList.add('on-btn');
+            await wait(500);
+            go(1);
+            await wait(1600);
+            go(0);
+            cursor.classList.remove('show', 'on-btn');
+            locked = false;
+        }
+
+        async function simTab() {
+            if (locked) return; locked = true; stopPlay();
+            go(0); await wait(400);
+            go(2); await wait(1600);
+            go(0); locked = false;
+        }
+
+        async function simClick() {
+            if (locked) return; locked = true; stopPlay();
+            go(0); await wait(300);
+            cursor.classList.remove('on-btn');
+            cursor.classList.add('show');
+            await wait(50);
+            cursor.classList.add('on-btn');
+            await wait(500);
+            go(1); await wait(600);
+            go(3); await wait(800);
+            go(0);
+            cursor.classList.remove('show', 'on-btn');
+            locked = false;
+        }
+
+        async function simFull() {
+            if (locked) return; locked = true; stopPlay();
+            go(0); await wait(400);
+
+            // hover
+            cursor.classList.remove('on-btn');
+            cursor.classList.add('show');
+            await wait(50);
+            cursor.classList.add('on-btn');
+            await wait(500);
+            go(1); await wait(1400);
+
+            // leave
+            cursor.classList.remove('show', 'on-btn');
+            go(0); await wait(500);
+
+            // tab focus
+            go(2); await wait(1400);
+
+            // active
+            cursor.classList.remove('on-btn');
+            cursor.classList.add('show');
+            await wait(50);
+            cursor.classList.add('on-btn');
+            await wait(400);
+            go(3); await wait(1000);
+
+            // done
+            cursor.classList.remove('show', 'on-btn');
+            go(0); locked = false;
+        }
+
+        // ── AUTO CYCLE ──
+        function togglePlay() {
+            playing = !playing;
+            playBtn.classList.toggle('active', playing);
+            playing ? startPlay() : stopPlay();
+        }
+        function startPlay() {
+            stopPlay(); playing = true;
+            playBtn.classList.add('active');
+            iv = setInterval(() => { cur = (cur + 1) % 4; render(); }, speed);
+        }
+        function stopPlay() {
+            clearInterval(iv); iv = null; playing = false;
+            playBtn.classList.remove('active');
+        }
+        function spd(ms) {
+            speed = ms;
+            document.querySelectorAll('#sp1,#sp2,#sp3').forEach(b => b.classList.remove('active'));
+            document.getElementById(ms === 2800 ? 'sp1' : ms === 1600 ? 'sp2' : 'sp3').classList.add('active');
+            if (playing) { stopPlay(); startPlay(); }
+        }
+
+        render();
+    </script>
+</body>
+
+</html>
