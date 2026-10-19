@@ -125,19 +125,135 @@
 // console.log(outer);
 // console.log(middle);
 
-let x = 1;
+// let x = 1;
+
+// function outer() {
+//   let x = 2;
+
+//   function inner() {
+//     let x = 3;
+//     console.log(x);
+//   }
+
+//   inner();
+//   console.log(x);
+// }
+
+// outer();
+// console.log(x);
+
+// //variable shadowing,
+
+// let color = "red";
+
+// function outer() {
+//   let color = "blue";
+
+//   function inner() {
+//     console.log(color);
+//   }
+
+//   inner();
+// }
+
+// outer();
+
+// let discount = 0.1;
+
+// function calculatePrice(basePrice) {
+//   let tax = 0.08;
+
+//   function applyDiscount(price) {
+//     let discountedPrice = price * (1 - discount); //108*(0.9)
+//     return discountedPrice; //97.2
+//   }
+
+//   let priceWithTax = basePrice * (1 + tax); //100*(1.08) = 108
+//   let finalPrice = applyDiscount(priceWithTax);
+//   return finalPrice;
+// }
+
+// console.log(calculatePrice(100)); //97.2
+
+// //lexical scoping -> my scope + parent's scope. so parent's scope = where i am defined. and not from where i was called.
+
+// let name = "Global";
+
+// function greet() {
+//   console.log("Hello, " + name);
+// }
+
+// function wrapper() {
+//   let name = "Wrapper";
+//   greet();
+// }
+
+// wrapper();
+
+// function a(){
+
+//   // some cdeo
+
+//   function b(){
+
+//   }
+
+//   // some more code
+// }
+
+// let x = 10;
+
+// function foo() {
+//   console.log(x);
+// }
+
+// function bar() {
+//   let x = 20;
+//   foo();
+// }
+
+// bar()
+
+// //lexical scope chaing example
+// var count = 0;
+
+// function increment() {
+//   console.log(count);
+//   count = count + 1;
+//   var count = 5;
+// }
+
+// increment();
+// console.log(count);
+
+// function createCounter(param) {
+//   let count = 0;
+
+//   function increment() {
+//     count = count + 1;
+//     console.log("Count is: " + count);
+//   }
+
+//   return increment;
+// }
+
+// const myCounter = createCounter();
+
+// myCounter();
+// myCounter();
+// myCounter();
 
 function outer() {
-  let x = 2;
+  let x = 10;
 
+  x = 20;
   function inner() {
-    let x = 3;
     console.log(x);
   }
 
-  inner();
-  console.log(x);
+  return inner;
 }
 
-outer();
-console.log(x);
+
+const fn = outer();
+fn();

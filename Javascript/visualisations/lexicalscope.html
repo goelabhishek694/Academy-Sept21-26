@@ -1,0 +1,768 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lexical Scoping in JavaScript</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: #f0f2f5;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        #wrap {
+            width: 1920px;
+            height: 1080px;
+            transform-origin: top center;
+            position: relative
+        }
+
+        canvas {
+            display: block;
+            border-radius: 16px;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, .08)
+        }
+
+        #bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, .97);
+            backdrop-filter: blur(14px);
+            border-top: 1px solid #e5e7eb;
+            padding: 14px 24px;
+            z-index: 200;
+            box-shadow: 0 -2px 20px rgba(0, 0, 0, .05);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .b {
+            padding: 14px 42px;
+            border: none;
+            border-radius: 12px;
+            font: 700 17px/1 'Segoe UI', system-ui, sans-serif;
+            cursor: pointer;
+            transition: all .15s;
+            user-select: none;
+        }
+
+        .b:active {
+            transform: scale(.96)
+        }
+
+        #prev {
+            background: #e5e7eb;
+            color: #374151
+        }
+
+        #prev:hover {
+            background: #d1d5db
+        }
+
+        #next {
+            background: #2563EB;
+            color: #fff
+        }
+
+        #next:hover {
+            background: #1d4ed8
+        }
+
+        #info {
+            font: 700 16px/1.3 'Segoe UI', system-ui, sans-serif;
+            color: #374151;
+            min-width: 400px;
+            text-align: center;
+            padding: 10px 24px;
+            background: #f3f4f6;
+            border-radius: 10px;
+        }
+
+        #info .n {
+            color: #2563EB
+        }
+
+        .keys {
+            font: 500 14px 'Segoe UI', system-ui, sans-serif;
+            color: #9ca3af
+        }
+    </style>
+</head>
+
+<body>
+    <div id="wrap"><canvas id="c" width="1920" height="1080"></canvas></div>
+    <div id="bar">
+        <button class="b" id="prev">◀ Back</button>
+        <div id="info"><span class="n">1</span> / 14 — Ready</div>
+        <button class="b" id="next">Next ▶</button>
+        <div class="keys">← → arrow keys</div>
+    </div>
+
+    <script>
+        const cv = document.getElementById('c'), X = cv.getContext('2d'), W = 1920, H = 1080;
+
+        function fit() {
+            const s = Math.min(window.innerWidth / W, (window.innerHeight - 80) / H, 1);
+            document.getElementById('wrap').style.transform = `scale(${s})`;
+        }
+        fit(); window.addEventListener('resize', fit);
+
+        const C = {
+            bg: '#ffffff', tx: '#1f2937', md: '#4b5563', lt: '#9ca3af',
+            blue: '#2563EB', blueD: '#1e40af', blueL: '#dbeafe',
+            green: '#10b981', greenD: '#065f46', greenL: '#d1fae5',
+            red: '#ef4444', redD: '#b91c1c', redL: '#fee2e2',
+            orange: '#f97316', orangeD: '#c2410c', orangeL: '#fff7ed',
+            purple: '#7c3aed', purpleD: '#5b21b6', purpleL: '#ede9fe',
+            teal: '#0d9488', tealD: '#115e59', tealL: '#ccfbf1',
+            amber: '#d97706', amberL: '#fef3c7',
+            gb: '#e5e7eb', gg: '#f3f4f6',
+            pink: '#ec4899', pinkL: '#fce7f3',
+        };
+
+        const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+        const eOut = t => 1 - Math.pow(1 - t, 3);
+        const eBack = t => { const c = 1.70158; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2) };
+        const pulse = () => .5 + .5 * Math.sin(performance.now() * .004);
+        const now = () => performance.now();
+
+        const STEPS = [
+            { id: 0, label: 'Title & Introduction' },
+            { id: 1, label: 'Show the Code' },
+            { id: 2, label: 'Show Scope Layout' },
+            { id: 3, label: 'Execution enters wrapper()' },
+            { id: 4, label: 'wrapper() calls greet()' },
+            { id: 5, label: 'Key Insight: Lexical Scope' },
+            { id: 6, label: 'greet() looks up "name"' },
+            { id: 7, label: 'Skip wrapper() — not lexical parent' },
+            { id: 8, label: 'Arrow to Global Scope' },
+            { id: 9, label: 'Found: name = "Global"' },
+            { id: 10, label: 'Output: Hello, Global' },
+            { id: 11, label: 'Why? — Explanation' },
+            { id: 12, label: 'Lexical vs Dynamic Comparison' },
+            { id: 13, label: 'Key Takeaways' },
+        ];
+        let step = 0, anim = 0;
+        const AD = 550;
+
+        function setStep(s) {
+            s = clamp(s, 0, STEPS.length - 1);
+            if (s === step) return;
+            step = s; anim = 0;
+            document.getElementById('info').innerHTML =
+                `<span class="n">${step + 1}</span> / ${STEPS.length} — ${STEPS[step].label}`;
+        }
+        document.getElementById('next').onclick = () => setStep(step + 1);
+        document.getElementById('prev').onclick = () => setStep(step - 1);
+        document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); setStep(step + 1) }
+            if (e.key === 'ArrowLeft') { e.preventDefault(); setStep(step - 1) }
+        });
+        setStep(0);
+
+        function rr(x, y, w, h, r) {
+            X.beginPath(); X.moveTo(x + r, y); X.lineTo(x + w - r, y);
+            X.quadraticCurveTo(x + w, y, x + w, y + r); X.lineTo(x + w, y + h - r);
+            X.quadraticCurveTo(x + w, y + h, x + w - r, y + h); X.lineTo(x + r, y + h);
+            X.quadraticCurveTo(x, y + h, x, y + h - r); X.lineTo(x, y + r);
+            X.quadraticCurveTo(x, y, x + r, y); X.closePath();
+        }
+        function dashedArrow(fx, fy, tx, ty, col, a, lw = 3.5) {
+            X.save(); X.globalAlpha = a; X.strokeStyle = col; X.fillStyle = col; X.lineWidth = lw;
+            X.setLineDash([12, 8]); X.lineDashOffset = -now() * .03;
+            X.beginPath(); X.moveTo(fx, fy); X.lineTo(tx, ty); X.stroke();
+            X.setLineDash([]);
+            const an = Math.atan2(ty - fy, tx - fx), hl = 18;
+            X.beginPath(); X.moveTo(tx, ty);
+            X.lineTo(tx - hl * Math.cos(an - Math.PI / 7), ty - hl * Math.sin(an - Math.PI / 7));
+            X.lineTo(tx - hl * Math.cos(an + Math.PI / 7), ty - hl * Math.sin(an + Math.PI / 7));
+            X.closePath(); X.fill(); X.restore();
+        }
+        function curvedDashedArrow(fx, fy, tx, ty, cx1, cy1, cx2, cy2, col, a, lw = 3.5) {
+            X.save(); X.globalAlpha = a; X.strokeStyle = col; X.fillStyle = col; X.lineWidth = lw;
+            X.setLineDash([12, 8]); X.lineDashOffset = -now() * .03;
+            X.beginPath(); X.moveTo(fx, fy); X.bezierCurveTo(cx1, cy1, cx2, cy2, tx, ty); X.stroke();
+            X.setLineDash([]);
+            const dx = tx - cx2, dy = ty - cy2;
+            const an = Math.atan2(dy, dx), hl = 18;
+            X.beginPath(); X.moveTo(tx, ty);
+            X.lineTo(tx - hl * Math.cos(an - Math.PI / 7), ty - hl * Math.sin(an - Math.PI / 7));
+            X.lineTo(tx - hl * Math.cos(an + Math.PI / 7), ty - hl * Math.sin(an + Math.PI / 7));
+            X.closePath(); X.fill(); X.restore();
+        }
+        function glow(x, y, w, h, col, i) {
+            X.save(); X.shadowColor = col; X.shadowBlur = 28 * i;
+            X.fillStyle = col + '15'; rr(x - 3, y - 3, w + 6, h + 6, 14); X.fill(); X.restore();
+        }
+        function badge(x, y, txt, bg, fg, a, align = 'left') {
+            X.save(); X.globalAlpha = a;
+            X.font = '700 15px "Segoe UI",system-ui,sans-serif';
+            const tw = X.measureText(txt).width + 26;
+            const bx = align === 'center' ? x - tw / 2 : x;
+            X.fillStyle = bg; rr(bx, y - 15, tw, 30, 7); X.fill();
+            X.fillStyle = fg; X.textAlign = 'left'; X.fillText(txt, bx + 13, y + 6);
+            X.restore();
+        }
+
+        function cam() {
+            let ox = 0, oy = 0;
+            if (step >= 3 && step <= 4) { ox = -10; oy = -15 }
+            if (step >= 5 && step <= 10) { ox = -20; oy = -25 }
+            if (step >= 11) { ox = 0; oy = 0 }
+            return { ox, oy };
+        }
+
+        /* ═══ CODE PANEL ═══ */
+        function drawCode() {
+            const { ox, oy } = cam();
+            const cx = 50 + ox, cy = 130 + oy, cw = 560, ch = 520;
+            X.fillStyle = '#f8fafc'; X.strokeStyle = C.gb; X.lineWidth = 1.5;
+            rr(cx, cy, cw, ch, 16); X.fill(); X.stroke();
+            X.fillStyle = C.gg; rr(cx, cy, cw, 46, 16); X.fill(); X.fillRect(cx, cy + 32, cw, 14);
+            X.strokeStyle = C.gb; X.beginPath(); X.moveTo(cx, cy + 46); X.lineTo(cx + cw, cy + 46); X.stroke();
+            ['#ef4444', '#f59e0b', '#22c55e'].forEach((c, i) => {
+                X.fillStyle = c; X.beginPath(); X.arc(cx + 24 + i * 24, cy + 23, 7, 0, Math.PI * 2); X.fill()
+            });
+            X.font = '600 15px "Segoe UI"'; X.fillStyle = C.lt; X.textAlign = 'center';
+            X.fillText('lexical-scope.js', cx + cw / 2, cy + 29);
+
+            const mono = '600 17px "SF Mono","Fira Code",Consolas,monospace';
+            const lines = [
+                [{ t: 'let ', c: C.blue }, { t: 'name', c: C.orange }, { t: ' = ', c: C.tx }, { t: '"Global"', c: '#059669' }, { t: ';', c: C.tx }],
+                [],
+                [{ t: 'function ', c: C.blue }, { t: 'greet', c: C.purple }, { t: '() {', c: C.tx }],
+                [{ t: '    console', c: C.purple }, { t: '.', c: C.tx }, { t: 'log', c: C.blue }, { t: '(', c: C.tx }, { t: '"Hello, "', c: '#059669' }, { t: ' + name);', c: C.tx }],
+                [{ t: '}', c: C.tx }],
+                [],
+                [{ t: 'function ', c: C.blue }, { t: 'wrapper', c: C.teal }, { t: '() {', c: C.tx }],
+                [{ t: '    let ', c: C.blue }, { t: 'name', c: C.orange }, { t: ' = ', c: C.tx }, { t: '"Wrapper"', c: '#059669' }, { t: ';', c: C.tx }],
+                [{ t: '    greet', c: C.purple }, { t: '();', c: C.tx }],
+                [{ t: '}', c: C.tx }],
+                [],
+                [{ t: 'wrapper', c: C.teal }, { t: '();', c: C.tx }],
+            ];
+
+            X.font = mono; X.textAlign = 'left';
+            lines.forEach((toks, i) => {
+                const ly = cy + 76 + i * 36;
+                X.fillStyle = '#bcc0c7'; X.font = '500 14px "SF Mono",Consolas,monospace';
+                X.fillText(String(i + 1).padStart(2, ' '), cx + 14, ly + 6);
+                X.font = mono;
+                let tx2 = cx + 48;
+                toks.forEach(tok => { X.fillStyle = tok.c; X.fillText(tok.t, tx2, ly + 6); tx2 += X.measureText(tok.t).width });
+            });
+
+            const hls = [];
+            if (step === 3) hls.push({ line: 6, col: C.teal }, { line: 7, col: C.teal });
+            if (step === 4 || step === 5) hls.push({ line: 8, col: C.purple });
+            if (step >= 6 && step <= 9) hls.push({ line: 3, col: C.orange });
+            if (step === 9 || step === 10) hls.push({ line: 0, col: C.green });
+            if (step === 7) hls.push({ line: 7, col: C.red });
+
+            hls.forEach(h => {
+                const ly = cy + 76 + h.line * 36;
+                X.save(); X.globalAlpha = .14 + .07 * pulse();
+                X.fillStyle = h.col; rr(cx + 8, ly - 13, cw - 16, 34, 6); X.fill();
+                X.restore();
+                X.save(); X.globalAlpha = .6; X.strokeStyle = h.col; X.lineWidth = 2;
+                rr(cx + 8, ly - 13, cw - 16, 34, 6); X.stroke(); X.restore();
+            });
+        }
+
+        /* ═══ SCOPE BOXES ═══ */
+        function drawScopes(a2) {
+            const { ox, oy } = cam();
+
+            const gx = 650 + ox, gy = 125 + oy, gw = 1220, gh = 870;
+            const gActive = step >= 8 && step <= 9;
+            const gFound = step >= 9 && step <= 10;
+
+            X.save(); X.globalAlpha = a2;
+            if (gActive) glow(gx, gy, gw, gh, C.blue, .5 + .3 * pulse());
+            X.fillStyle = C.blueL + '50'; X.strokeStyle = gActive ? C.blue : C.blue + '80'; X.lineWidth = gActive ? 3.5 : 2;
+            rr(gx, gy, gw, gh, 20); X.fill(); X.stroke();
+
+            // Global label
+            X.fillStyle = C.blue; rr(gx + 18, gy + 14, 170, 36, 9); X.fill();
+            X.font = '800 16px "Segoe UI"'; X.fillStyle = '#fff'; X.textAlign = 'left'; X.fillText('Global Scope', gx + 30, gy + 38);
+
+            // Global variable
+            const vbx = gx + 205, vby = gy + 15;
+            X.fillStyle = '#fff'; X.strokeStyle = gFound ? C.green : C.blue + '50'; X.lineWidth = gFound ? 3 : 1.5;
+            rr(vbx, vby, 260, 32, 7); X.fill(); X.stroke();
+            if (gFound) { glow(vbx, vby, 260, 32, C.green, .6 + .3 * pulse()) }
+            X.font = '700 16px "SF Mono",Consolas,monospace'; X.textAlign = 'left';
+            X.fillStyle = C.blue; X.fillText('name', vbx + 12, vby + 22);
+            X.fillStyle = C.md; X.fillText(' = ', vbx + 12 + X.measureText('name').width, vby + 22);
+            X.fillStyle = '#059669'; X.fillText('"Global"', vbx + 12 + X.measureText('name = ').width, vby + 22);
+
+            // greet() box
+            const grX = gx + 40, grY = gy + 75, grW = 550, grH = 360;
+            const grSearch = step === 6;
+
+            if (grSearch) glow(grX, grY, grW, grH, C.purple, .4 + .3 * pulse());
+            X.fillStyle = C.purpleL + '40'; X.strokeStyle = grSearch ? C.purple : C.purple + '70'; X.lineWidth = grSearch ? 3.5 : 2;
+            rr(grX, grY, grW, grH, 16); X.fill(); X.stroke();
+
+            X.fillStyle = C.purple; rr(grX + 16, grY + 14, 220, 34, 8); X.fill();
+            X.font = '800 15px "Segoe UI"'; X.fillStyle = '#fff'; X.textAlign = 'left';
+            X.fillText('greet() — Function Scope', grX + 26, grY + 37);
+
+            badge(grX + 246, grY + 30, '📍 Defined in Global Scope', C.purpleL, C.purpleD, a2);
+
+            // console.log inside greet
+            const clx = grX + 30, cly = grY + 65;
+            X.fillStyle = '#fff'; X.strokeStyle = C.purple + '50'; X.lineWidth = 1.5;
+            rr(clx, cly, 420, 46, 9); X.fill(); X.stroke();
+            X.font = '600 17px "SF Mono","Fira Code",Consolas,monospace'; X.textAlign = 'left';
+            X.fillStyle = C.purple; X.fillText('console', clx + 14, cly + 30);
+            X.fillStyle = C.tx; X.fillText('.', clx + 14 + X.measureText('console').width, cly + 30);
+            X.fillStyle = C.blue; X.fillText('log', clx + 14 + X.measureText('console.').width, cly + 30);
+            X.fillStyle = C.tx; X.fillText('("Hello, "+name)', clx + 14 + X.measureText('console.log').width, cly + 30);
+
+            // Search indicator
+            if (step === 6) {
+                const sa = eOut(anim);
+                X.save(); X.globalAlpha = sa;
+                X.font = '700 18px "Segoe UI"'; X.fillStyle = C.purple; X.textAlign = 'center';
+                X.fillText('🔍 Looking for "name" here...', grX + grW / 2, grY + 150);
+                X.fillStyle = C.purpleL; rr(grX + 60, grY + 168, grW - 120, 42, 9); X.fill();
+                X.font = '600 16px "Segoe UI"'; X.fillStyle = C.purpleD;
+                X.fillText('No local "name" variable found', grX + grW / 2, grY + 196);
+                X.restore();
+            }
+
+            // Lexical insight inside greet
+            if (step === 7 || step === 8) {
+                X.save(); X.globalAlpha = step === 7 ? eOut(anim) : 1;
+                X.fillStyle = C.amberL; X.strokeStyle = C.amber + '60'; X.lineWidth = 2;
+                rr(grX + 30, grY + 215, grW - 60, 120, 12); X.fill(); X.stroke();
+                X.font = '700 17px "Segoe UI"'; X.fillStyle = C.amber; X.textAlign = 'center';
+                X.fillText('💡 Key Insight: Lexical Scoping', grX + grW / 2, grY + 248);
+                X.font = '500 16px "Segoe UI"'; X.fillStyle = C.orangeD;
+                X.fillText('Scope is determined where the function', grX + grW / 2, grY + 276);
+                X.font = '800 16px "Segoe UI"';
+                X.fillText('is WRITTEN, not where it is CALLED.', grX + grW / 2, grY + 300);
+                X.font = '500 15px "Segoe UI"'; X.fillStyle = C.md;
+                X.fillText('greet() is written in Global → looks in Global next', grX + grW / 2, grY + 324);
+                X.restore();
+            }
+
+            // wrapper() box
+            const wX = gx + 640, wY = gy + 75, wW = 540, wH = 360;
+            const wActive = step >= 3 && step <= 4;
+            const wCrossed = step >= 7;
+
+            if (wActive) glow(wX, wY, wW, wH, C.teal, .4 + .3 * pulse());
+            X.fillStyle = C.tealL + '40'; X.strokeStyle = wActive ? C.teal : (wCrossed ? C.red + '40' : C.teal + '70');
+            X.lineWidth = wActive ? 3.5 : 2;
+            rr(wX, wY, wW, wH, 16); X.fill(); X.stroke();
+
+            X.fillStyle = C.teal; rr(wX + 16, wY + 14, 250, 34, 8); X.fill();
+            X.font = '800 15px "Segoe UI"'; X.fillStyle = '#fff'; X.textAlign = 'left';
+            X.fillText('wrapper() — Function Scope', wX + 26, wY + 37);
+
+            // wrapper's variable
+            const wvx = wX + 30, wvy = wY + 62;
+            X.fillStyle = '#fff';
+            X.strokeStyle = wCrossed ? C.red + '40' : C.teal + '50'; X.lineWidth = 1.5;
+            rr(wvx, wvy, 290, 38, 8); X.fill(); X.stroke();
+            X.font = '700 16px "SF Mono",Consolas,monospace'; X.textAlign = 'left';
+
+            if (wCrossed) {
+                X.save(); X.globalAlpha = .35;
+                X.fillStyle = C.md; X.fillText('name = "Wrapper"', wvx + 14, wvy + 26);
+                const tw3 = X.measureText('name = "Wrapper"').width;
+                X.strokeStyle = C.red; X.lineWidth = 2.5;
+                X.beginPath(); X.moveTo(wvx + 10, wvy + 20); X.lineTo(wvx + 18 + tw3, wvy + 20); X.stroke();
+                X.restore();
+            } else {
+                X.fillStyle = C.teal; X.fillText('name', wvx + 14, wvy + 26);
+                X.fillStyle = C.md; X.fillText(' = ', wvx + 14 + X.measureText('name').width, wvy + 26);
+                X.fillStyle = '#059669'; X.fillText('"Wrapper"', wvx + 14 + X.measureText('name = ').width, wvy + 26);
+            }
+
+            // greet() call inside wrapper
+            const gcx = wX + 30, gcy = wY + 118;
+            X.fillStyle = '#fff'; X.strokeStyle = (step === 4) ? C.purple + '90' : C.teal + '40'; X.lineWidth = (step === 4) ? 2.5 : 1.5;
+            rr(gcx, gcy, 220, 42, 8); X.fill(); X.stroke();
+            X.font = '600 17px "SF Mono","Fira Code",Consolas,monospace'; X.textAlign = 'left';
+            X.fillStyle = C.purple; X.fillText('greet', gcx + 14, gcy + 28);
+            X.fillStyle = C.tx; X.fillText('();', gcx + 14 + X.measureText('greet').width, gcy + 28);
+
+            if (step === 4) {
+                badge(gcx + 230, gcy + 14, '▶ Calling greet()', C.purpleL, C.purpleD, eOut(anim));
+            }
+
+            // NOT searched here
+            if (wCrossed) {
+                const ba2 = step === 7 ? eOut(anim) : 1;
+                X.save(); X.globalAlpha = ba2;
+                X.fillStyle = C.redL; X.strokeStyle = C.red + '60'; X.lineWidth = 2;
+                rr(wX + 30, wY + 185, wW - 60, 95, 12); X.fill(); X.stroke();
+                X.font = '700 17px "Segoe UI"'; X.fillStyle = C.redD; X.textAlign = 'center';
+                X.fillText('✗ NOT searched here', wX + wW / 2, wY + 218);
+                X.font = '500 15px "Segoe UI"'; X.fillStyle = C.md;
+                X.fillText('wrapper() is the caller, not the', wX + wW / 2, wY + 244);
+                X.fillText('lexical parent of greet()', wX + wW / 2, wY + 266);
+                X.restore();
+            }
+
+            if (step === 3) {
+                badge(wX + wW - 190, wY + wH - 34, '▶ Executing', C.greenL, C.greenD, eOut(anim));
+            }
+
+            // ── ARROWS ──
+
+            if (step >= 4 && step <= 5) {
+                const aa = step === 4 ? eOut(anim) : 1;
+                const fxA = gcx + 220, fyA = gcy + 21;
+                const txA = grX + grW, tyA = grY + 45;
+                dashedArrow(fxA + 12, fyA, txA + 5, tyA, C.purple, aa, 3.5);
+                X.save(); X.globalAlpha = aa;
+                X.font = '700 15px "Segoe UI"'; X.fillStyle = C.purple; X.textAlign = 'center';
+                X.fillText('calls', ((fxA + txA) / 2) + 10, Math.min(fyA, tyA) - 16);
+                X.restore();
+            }
+
+            if (step >= 8 && step <= 10) {
+                const aa2 = step === 8 ? eOut(anim) : 1;
+                const fxB = grX + grW / 2, fyB = grY;
+                const txB = vbx + 130, tyB = vby + 32;
+
+                curvedDashedArrow(fxB, fyB - 5, txB, tyB,
+                    fxB, gy + 50, txB, gy + 50,
+                    C.green, aa2, 3.5);
+
+                X.save(); X.globalAlpha = aa2;
+                X.fillStyle = C.greenL; X.strokeStyle = C.green + '60'; X.lineWidth = 2;
+                const labelW = 360, labelH = 34;
+                const labelX = grX + grW / 2 - labelW / 2, labelY = gy + 48 - labelH / 2;
+                rr(labelX, labelY, labelW, labelH, 7); X.fill(); X.stroke();
+                X.font = '800 16px "Segoe UI"'; X.fillStyle = C.greenD; X.textAlign = 'center';
+                X.fillText('⬆ Lexical lookup → Global Scope', grX + grW / 2, gy + 54);
+                X.restore();
+            }
+
+            if (step >= 7) {
+                const xaB = step === 7 ? eOut(anim) : 1;
+                X.save(); X.globalAlpha = xaB * .35;
+                X.strokeStyle = C.red; X.lineWidth = 2.5; X.setLineDash([8, 10]);
+                X.beginPath(); X.moveTo(grX + grW, grY + grH / 2); X.lineTo(wX, wY + wH / 2); X.stroke();
+                X.setLineDash([]);
+                const mx = (grX + grW + wX) / 2, my = (grY + grH / 2 + wY + wH / 2) / 2;
+                X.strokeStyle = C.red; X.lineWidth = 5; X.globalAlpha = xaB * .7;
+                X.beginPath(); X.moveTo(mx - 20, my - 20); X.lineTo(mx + 20, my + 20); X.stroke();
+                X.beginPath(); X.moveTo(mx + 20, my - 20); X.lineTo(mx - 20, my + 20); X.stroke();
+                X.restore();
+            }
+
+            X.restore();
+        }
+
+        /* ═══ OUTPUT CONSOLE ═══ */
+        function drawOutput(a3) {
+            const { ox, oy } = cam();
+            const bx = 690 + ox, by = 870 + oy, bw = 480, bh = 110;
+            X.save(); X.globalAlpha = a3;
+            X.shadowColor = C.green; X.shadowBlur = 28;
+            X.fillStyle = '#111827'; rr(bx, by, bw, bh, 14); X.fill();
+            X.shadowBlur = 0;
+            X.fillStyle = '#1f2937'; rr(bx, by, bw, 36, 14); X.fill(); X.fillRect(bx, by + 26, bw, 10);
+            X.font = '600 14px "Segoe UI"'; X.fillStyle = C.lt; X.textAlign = 'left';
+            X.fillText('Console Output', bx + 16, by + 24);
+            X.font = '700 24px "SF Mono","Fira Code",Consolas,monospace';
+            X.fillStyle = '#34d399';
+            X.fillText('> "Hello, Global"', bx + 22, by + 76);
+            badge(bx + bw + 18, by + 56, '✓ From Global Scope', C.greenL, C.greenD, a3);
+            X.restore();
+        }
+
+        /* ═══ EXPLANATION PANEL ═══ */
+        function drawExplanation(a4) {
+            const ex = 70, ey = 640, ew = 560, eh = 340;
+            X.save(); X.globalAlpha = a4;
+            X.fillStyle = C.amberL; X.strokeStyle = C.amber + '50'; X.lineWidth = 2;
+            rr(ex, ey, ew, eh, 16); X.fill(); X.stroke();
+
+            X.font = '800 22px "Segoe UI"'; X.fillStyle = C.orangeD; X.textAlign = 'left';
+            X.fillText('📖 Why "Global" and not "Wrapper"?', ex + 22, ey + 38);
+
+            const pts = [
+                'greet() is defined (written) in the Global Scope.',
+                'When greet() needs a variable, it looks in its',
+                'lexical environment — where it was written.',
+                '',
+                'wrapper() is the caller, but JavaScript uses',
+                'lexical (static) scoping, not dynamic scoping.',
+                '',
+                'The scope chain is fixed at function creation',
+                'time, not at call time.',
+            ];
+
+            X.font = '500 16px "Segoe UI"'; X.fillStyle = C.tx;
+            pts.forEach((p, i) => {
+                if (!p) return;
+                const py = ey + 72 + i * 28;
+                const da = eOut(clamp((a4 - .1 * i) * 2));
+                X.save(); X.globalAlpha = a4 * da;
+                X.fillText(p, ex + 26, py);
+                X.restore();
+            });
+            X.restore();
+        }
+
+        /* ═══ COMPARISON TABLE ═══ */
+        function drawComparison(a5) {
+            const cx2 = 660, cy2 = 490, cw2 = 580, ch2 = 420;
+            X.save(); X.globalAlpha = a5;
+
+            X.fillStyle = '#f8fafc'; X.strokeStyle = C.gb; X.lineWidth = 1.5;
+            rr(cx2, cy2, cw2, ch2, 16); X.fill(); X.stroke();
+
+            X.font = '800 22px "Segoe UI"'; X.fillStyle = C.tx; X.textAlign = 'center';
+            X.fillText('Lexical  vs  Dynamic Scoping', cx2 + cw2 / 2, cy2 + 38);
+
+            const c1 = cx2 + 22, c2 = cx2 + cw2 / 2 + 12, cw3 = cw2 / 2 - 34;
+
+            X.fillStyle = C.greenL; rr(c1, cy2 + 56, cw3, 36, 7); X.fill();
+            X.font = '800 16px "SF Mono",Consolas,monospace'; X.fillStyle = C.greenD; X.textAlign = 'center';
+            X.fillText('Lexical (JS)', c1 + cw3 / 2, cy2 + 80);
+
+            X.fillStyle = C.redL; rr(c2, cy2 + 56, cw3, 36, 7); X.fill();
+            X.fillStyle = C.redD; X.fillText('Dynamic', c2 + cw3 / 2, cy2 + 80);
+
+            const rows = [
+                ['Scope at write-time', 'Scope at call-time'],
+                ['Predictable', 'Unpredictable'],
+                ['greet() → Global', 'greet() → wrapper()'],
+                ['Output: "Global"', 'Output: "Wrapper"'],
+                ['✓ JavaScript uses this', '✗ Not JS behavior'],
+            ];
+
+            X.font = '500 15px "Segoe UI"'; X.textAlign = 'left';
+            rows.forEach((row, i) => {
+                const ry = cy2 + 110 + i * 52;
+                const da2 = eOut(clamp((a5 - .08 * i) * 2.5));
+                X.save(); X.globalAlpha = a5 * da2;
+
+                X.fillStyle = i % 2 ? '#f8fafc' : '#fff';
+                rr(c1, ry, cw3, 42, 5); X.fill();
+                X.fillStyle = C.greenD; X.fillText(row[0], c1 + 12, ry + 28);
+
+                X.fillStyle = i % 2 ? '#f8fafc' : '#fff';
+                rr(c2, ry, cw3, 42, 5); X.fill();
+                X.fillStyle = C.redD; X.fillText(row[1], c2 + 12, ry + 28);
+
+                X.restore();
+            });
+
+            X.fillStyle = C.greenL; X.strokeStyle = C.green; X.lineWidth = 2;
+            rr(c1, cy2 + ch2 - 54, cw3, 40, 9); X.fill(); X.stroke();
+            X.font = '800 15px "Segoe UI"'; X.fillStyle = C.greenD; X.textAlign = 'center';
+            X.fillText('✓ JavaScript', c1 + cw3 / 2, cy2 + ch2 - 28);
+
+            X.fillStyle = C.redL; X.strokeStyle = C.red + '60'; X.lineWidth = 1.5;
+            rr(c2, cy2 + ch2 - 54, cw3, 40, 9); X.fill(); X.stroke();
+            X.font = '800 15px "Segoe UI"'; X.fillStyle = C.redD;
+            X.fillText('✗ Not JavaScript', c2 + cw3 / 2, cy2 + ch2 - 28);
+
+            X.restore();
+        }
+
+        /* ═══ TAKEAWAYS ═══ */
+        function drawTakeaways(a6) {
+            const kx = 1280, ky = 490, kw = 560, kh = 420;
+            X.save(); X.globalAlpha = a6;
+
+            X.fillStyle = C.purpleL; X.strokeStyle = C.purple + '40'; X.lineWidth = 2;
+            rr(kx, ky, kw, kh, 16); X.fill(); X.stroke();
+
+            X.font = '800 22px "Segoe UI"'; X.fillStyle = C.purpleD; X.textAlign = 'left';
+            X.fillText('💡 Key Takeaways', kx + 22, ky + 38);
+
+            const items = [
+                { icon: '1️⃣', text: 'JavaScript uses lexical (static) scoping' },
+                { icon: '2️⃣', text: 'Scope is set at author time, not call time' },
+                { icon: '3️⃣', text: 'Scope chain = where function is defined' },
+                { icon: '4️⃣', text: 'Closures rely on lexical scoping' },
+                { icon: '5️⃣', text: 'The call stack ≠ the scope chain' },
+            ];
+
+            items.forEach((it, i) => {
+                const iy = ky + 72 + i * 62;
+                const da3 = eOut(clamp((a6 - .1 * i) * 3));
+                X.save(); X.globalAlpha = a6 * da3;
+
+                X.fillStyle = '#fff'; rr(kx + 18, iy - 6, kw - 36, 50, 10); X.fill();
+                X.font = '22px "Segoe UI"'; X.textAlign = 'left'; X.fillText(it.icon, kx + 32, iy + 26);
+                X.font = '500 16px "Segoe UI"'; X.fillStyle = C.tx;
+                X.fillText(it.text, kx + 66, iy + 24);
+
+                X.restore();
+            });
+
+            X.fillStyle = C.blueL; X.strokeStyle = C.blue + '40'; X.lineWidth = 1.5;
+            rr(kx + 18, ky + kh - 62, kw - 36, 48, 10); X.fill(); X.stroke();
+            X.font = '600 15px "Segoe UI"'; X.fillStyle = C.blueD; X.textAlign = 'center';
+            X.fillText('🧠 "Where was it written?" — the only question that matters.', kx + kw / 2, ky + kh - 32);
+
+            X.restore();
+        }
+
+        /* ═══ MAIN RENDER ═══ */
+        function render() {
+            X.clearRect(0, 0, W, H); X.fillStyle = C.bg; X.fillRect(0, 0, W, H);
+            const a = clamp(anim);
+
+            // ── Scopes (behind title) ──
+            if (step >= 2) {
+                drawScopes(step === 2 ? eBack(a) : 1);
+            }
+
+            // ── Title ──
+            if (step >= 0) {
+                X.save();
+                X.fillStyle = C.bg;
+                X.fillRect(0, 0, W, 115);
+
+                const ta = step === 0 ? eOut(a) : 1;
+                X.globalAlpha = ta;
+                X.font = '800 44px "Segoe UI",system-ui,sans-serif'; X.fillStyle = C.tx; X.textAlign = 'center';
+                X.fillText('Lexical Scoping in JavaScript', W / 2, 54);
+                X.font = '500 20px "Segoe UI"'; X.fillStyle = C.md;
+                X.fillText('Scope is determined by where a function is written, not where it is called', W / 2, 88);
+                X.strokeStyle = C.gb; X.lineWidth = 1.5;
+                X.beginPath(); X.moveTo(460, 108); X.lineTo(1460, 108); X.stroke();
+                X.restore();
+            }
+
+            // ── Code panel ──
+            if (step >= 1) {
+                X.save(); X.globalAlpha = step === 1 ? eOut(a) : 1;
+                drawCode();
+                X.restore();
+            }
+
+            // ── Lexical insight banner (step 5) ──
+            if (step === 5) {
+                const ba3 = eBack(a);
+                const cardW = 820, cardH = 230;
+                const bx2 = W / 2 - cardW / 2, by2 = H / 2 - cardH / 2;
+                X.save(); X.globalAlpha = ba3;
+                X.fillStyle = 'rgba(0,0,0,.4)'; X.fillRect(0, 0, W, H);
+
+                X.shadowColor = C.amber; X.shadowBlur = 50;
+                X.fillStyle = '#fff'; rr(bx2, by2, cardW, cardH, 24); X.fill();
+                X.shadowBlur = 0;
+                X.strokeStyle = C.amber; X.lineWidth = 3.5;
+                rr(bx2, by2, cardW, cardH, 24); X.stroke();
+
+                const centerX = bx2 + cardW / 2;
+
+                X.font = '40px "Segoe UI"'; X.textAlign = 'center'; X.fillStyle = C.tx;
+                X.fillText('💡', centerX, by2 + 55);
+
+                X.font = '800 30px "Segoe UI"'; X.fillStyle = C.orangeD;
+                X.fillText('Lexical Scoping Rule', centerX, by2 + 100);
+
+                X.font = '600 22px "Segoe UI"'; X.fillStyle = C.tx;
+                X.fillText('Scope is determined where the function is', centerX, by2 + 140);
+
+                const writtenText = 'WRITTEN';
+                const midText = ', not where it is ';
+                const calledText = 'CALLED';
+                const dotText = '.';
+
+                X.font = '900 22px "Segoe UI"';
+                const writtenW = X.measureText(writtenText).width;
+                const calledW = X.measureText(calledText).width;
+                X.font = '600 22px "Segoe UI"';
+                const midW = X.measureText(midText).width;
+                const dotW = X.measureText(dotText).width;
+
+                const totalW = writtenW + midW + calledW + dotW;
+                let drawX2 = centerX - totalW / 2;
+                const lineY = by2 + 180;
+
+                X.textAlign = 'left';
+
+                X.font = '900 22px "Segoe UI"'; X.fillStyle = C.purple;
+                X.fillText(writtenText, drawX2, lineY);
+                drawX2 += writtenW;
+
+                X.font = '600 22px "Segoe UI"'; X.fillStyle = C.tx;
+                X.fillText(midText, drawX2, lineY);
+                drawX2 += midW;
+
+                X.font = '900 22px "Segoe UI"'; X.fillStyle = C.red;
+                X.fillText(calledText, drawX2, lineY);
+                drawX2 += calledW;
+
+                X.font = '600 22px "Segoe UI"'; X.fillStyle = C.tx;
+                X.fillText(dotText, drawX2, lineY);
+
+                X.save();
+                const wStartX = centerX - totalW / 2;
+                X.strokeStyle = C.purple; X.lineWidth = 3;
+                X.beginPath(); X.moveTo(wStartX, lineY + 5); X.lineTo(wStartX + writtenW, lineY + 5); X.stroke();
+
+                const cStartX = centerX - totalW / 2 + writtenW + midW;
+                X.strokeStyle = C.red; X.lineWidth = 3;
+                X.beginPath(); X.moveTo(cStartX, lineY + 5); X.lineTo(cStartX + calledW, lineY + 5); X.stroke();
+                X.restore();
+
+                X.restore();
+            }
+
+            // ── Output ──
+            if (step >= 10 && step <= 11) {
+                drawOutput(step === 10 ? eBack(a) : 1);
+            }
+
+            // ── Explanation ──
+            if (step >= 11) {
+                drawExplanation(step === 11 ? eOut(a) : 1);
+            }
+
+            // ── Comparison ──
+            if (step >= 12) {
+                drawComparison(step === 12 ? eOut(a) : 1);
+            }
+
+            // ── Takeaways ──
+            if (step >= 13) {
+                drawTakeaways(step === 13 ? eOut(a) : 1);
+            }
+        }
+
+        let lastT = 0;
+        function loop(ts) {
+            const dt = (ts - lastT) / 1000; lastT = ts;
+            anim = clamp(anim + dt * (1000 / AD));
+            render();
+            requestAnimationFrame(loop);
+        }
+        requestAnimationFrame(loop);
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Scope Chain — Interactive Animation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            background: #f0f2f5;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        #wrap {
+            width: 1920px;
+            height: 1080px;
+            transform-origin: top center;
+            position: relative
+        }
+
+        canvas {
+            display: block;
+            border-radius: 16px;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, .08)
+        }
+
+        #bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, .97);
+            backdrop-filter: blur(14px);
+            border-top: 1px solid #e5e7eb;
+            padding: 16px 24px;
+            z-index: 200;
+            box-shadow: 0 -2px 20px rgba(0, 0, 0, .05);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .b {
+            padding: 11px 32px;
+            border: none;
+            border-radius: 10px;
+            font: 600 15px/1 'Segoe UI', system-ui, sans-serif;
+            cursor: pointer;
+            transition: all .15s;
+            user-select: none;
+        }
+
+        .b:active {
+            transform: scale(.96)
+        }
+
+        #prev {
+            background: #e5e7eb;
+            color: #374151
+        }
+
+        #prev:hover {
+            background: #d1d5db
+        }
+
+        #next {
+            background: #2563EB;
+            color: #fff
+        }
+
+        #next:hover {
+            background: #1d4ed8
+        }
+
+        #stepInfo {
+            font: 600 14px/1.3 'Segoe UI', system-ui, sans-serif;
+            color: #374151;
+            min-width: 340px;
+            text-align: center;
+            padding: 8px 18px;
+            background: #f3f4f6;
+            border-radius: 8px;
+        }
+
+        #stepInfo .num {
+            color: #2563EB
+        }
+
+        .keys {
+            font: 400 12px/1 'Segoe UI', system-ui, sans-serif;
+            color: #9ca3af
+        }
+    </style>
+</head>
+
+<body>
+    <div id="wrap"><canvas id="c" width="1920" height="1080"></canvas></div>
+    <div id="bar">
+        <button class="b" id="prev">◀ Back</button>
+        <div id="stepInfo"><span class="num">1</span> / 16 — Ready</div>
+        <button class="b" id="next">Next ▶</button>
+        <div class="keys">← → or click buttons</div>
+    </div>
+    <script>
+        const C = document.getElementById('c'), X = C.getContext('2d'), W = 1920, H = 1080;
+        (function fit() {
+            const s = Math.min(window.innerWidth / W, (window.innerHeight - 90) / H, 1);
+            document.getElementById('wrap').style.transform = `scale(${s})`;
+        })();
+        window.addEventListener('resize', () => {
+            const s = Math.min(window.innerWidth / W, (window.innerHeight - 90) / H, 1);
+            document.getElementById('wrap').style.transform = `scale(${s})`;
+        });
+
+        /* ── colours ── */
+        const P = {
+            bg: '#ffffff', text: '#1f2937', med: '#4b5563', light: '#9ca3af',
+            blue: '#2563EB', blueD: '#1e40af', blueL: '#dbeafe',
+            green: '#10b981', greenD: '#065f46', greenL: '#d1fae5',
+            red: '#ef4444', redD: '#b91c1c', redL: '#fee2e2',
+            orange: '#f97316', orangeL: '#fff7ed',
+            purple: '#7c3aed', purpleL: '#ede9fe',
+            grayBd: '#e5e7eb', grayBg: '#f3f4f6',
+            yellow: '#eab308', yellowL: '#fef9c3',
+            teal: '#0d9488', tealL: '#ccfbf1',
+        };
+
+        /* ── easing ── */
+        const ease = {
+            out: t => 1 - Math.pow(1 - t, 3),
+            inOut: t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2,
+            outBack: t => { const c = 1.70158; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2) },
+            elastic: t => { if (!t || t === 1) return t; return Math.pow(2, -10 * t) * Math.sin((t * 10 - .75) * 2 * Math.PI / 3) + 1 },
+        };
+        const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+
+        /* ── steps ── */
+        const STEPS = [
+            { id: 0, label: 'Title & Introduction' },
+            { id: 1, label: 'Show Code Panel' },
+            { id: 2, label: 'Show Scope Boxes (nested)' },
+            { id: 3, label: 'Execution enters inner()' },
+            { id: 4, label: 'Search: Inner Scope for "color"' },
+            { id: 5, label: 'Inner Scope → Not Found' },
+            { id: 6, label: 'Arrow up to Outer Scope' },
+            { id: 7, label: 'Outer Scope → Found "blue"' },
+            { id: 8, label: 'Output: "blue"' },
+            { id: 9, label: 'Scenario 2: outer color removed' },
+            { id: 10, label: 'Search Inner → Not Found' },
+            { id: 11, label: 'Search Outer → Not Found' },
+            { id: 12, label: 'Arrow up to Global Scope' },
+            { id: 13, label: 'Global Scope → Found "red"' },
+            { id: 14, label: 'Scenario 3: Failed Lookup' },
+            { id: 15, label: 'ReferenceError' },
+        ];
+
+        let step = 0, anim = 0, animDir = 1;
+        const ANIM_DUR = 600;
+
+        function setStep(s) {
+            s = clamp(s, 0, STEPS.length - 1);
+            if (s === step) return;
+            step = s; anim = 0; animDir = 1;
+            document.getElementById('stepInfo').innerHTML =
+                `<span class="num">${step + 1}</span> / ${STEPS.length} — ${STEPS[step].label}`;
+        }
+
+        document.getElementById('next').onclick = () => setStep(step + 1);
+        document.getElementById('prev').onclick = () => setStep(step - 1);
+        document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); setStep(step + 1) }
+            else if (e.key === 'ArrowLeft') { e.preventDefault(); setStep(step - 1) }
+        });
+        setStep(0);
+
+        /* ── draw helpers ── */
+        function rr(x, y, w, h, r) {
+            X.beginPath(); X.moveTo(x + r, y); X.lineTo(x + w - r, y);
+            X.quadraticCurveTo(x + w, y, x + w, y + r); X.lineTo(x + w, y + h - r);
+            X.quadraticCurveTo(x + w, y + h, x + w - r, y + h); X.lineTo(x + r, y + h);
+            X.quadraticCurveTo(x, y + h, x, y + h - r); X.lineTo(x, y + r);
+            X.quadraticCurveTo(x, y, x + r, y); X.closePath();
+        }
+        function arrow(fx, fy, tx, ty, col, a, lw = 2.5) {
+            X.save(); X.globalAlpha = a; X.strokeStyle = col; X.fillStyle = col; X.lineWidth = lw;
+            const an = Math.atan2(ty - fy, tx - fx), hl = 14;
+            X.beginPath(); X.moveTo(fx, fy); X.lineTo(tx, ty); X.stroke();
+            X.beginPath(); X.moveTo(tx, ty);
+            X.lineTo(tx - hl * Math.cos(an - Math.PI / 6), ty - hl * Math.sin(an - Math.PI / 6));
+            X.lineTo(tx - hl * Math.cos(an + Math.PI / 6), ty - hl * Math.sin(an + Math.PI / 6));
+            X.closePath(); X.fill(); X.restore();
+        }
+        function glow(x, y, w, h, col, i) {
+            X.save(); X.shadowColor = col; X.shadowBlur = 24 * i;
+            X.fillStyle = col + '18'; rr(x - 3, y - 3, w + 6, h + 6, 12); X.fill(); X.restore();
+        }
+        function badge(x, y, text, bg, fg, a) {
+            X.save(); X.globalAlpha = a;
+            X.font = '700 13px "Segoe UI",system-ui,sans-serif';
+            const tw = X.measureText(text).width + 20;
+            X.fillStyle = bg; rr(x, y - 14, tw, 26, 6); X.fill();
+            X.fillStyle = fg; X.textAlign = 'left'; X.fillText(text, x + 10, y + 4);
+            X.restore();
+        }
+        function pulse() { return .5 + .5 * Math.sin(performance.now() * .004) }
+
+        /* ── scope box geometry ── */
+        const G = { x: 660, y: 140, w: 1180, h: 820 };  // global
+        const O = { x: 700, y: 240, w: 700, h: 660 };   // outer
+        const I = { x: 740, y: 400, w: 620, h: 440 };   // inner
+
+        /* ── code panel ── */
+        function drawCode(scenario) {
+            const cx = 60, cy = 140, cw = 540, ch = 540;
+            X.fillStyle = '#f8fafc'; X.strokeStyle = P.grayBd; X.lineWidth = 1;
+            rr(cx, cy, cw, ch, 14); X.fill(); X.stroke();
+            // header
+            X.fillStyle = P.grayBg; rr(cx, cy, cw, 42, 14); X.fill(); X.fillRect(cx, cy + 30, cw, 12);
+            X.strokeStyle = P.grayBd; X.beginPath(); X.moveTo(cx, cy + 42); X.lineTo(cx + cw, cy + 42); X.stroke();
+            ['#ef4444', '#f59e0b', '#22c55e'].forEach((c, i) => {
+                X.fillStyle = c; X.beginPath(); X.arc(cx + 22 + i * 22, cy + 21, 6, 0, Math.PI * 2); X.fill()
+            });
+            X.font = '500 13px "Segoe UI"'; X.fillStyle = P.light; X.textAlign = 'center';
+            X.fillText('scope-chain.js', cx + cw / 2, cy + 26);
+
+            // code
+            const mono = '500 15px "SF Mono","Fira Code",Consolas,monospace';
+            const lines = [];
+            if (scenario === 1) {
+                // Scenario 1 — normal
+                lines.push(
+                    [{ t: 'let ', c: P.blue }, { t: 'color', c: P.orange }, { t: ' = ', c: P.text }, { t: '"red"', c: '#059669' }, { t: ';', c: P.text }],
+                    [],
+                    [{ t: 'function ', c: P.blue }, { t: 'outer', c: P.purple }, { t: '() {', c: P.text }],
+                    [{ t: '    let ', c: P.blue }, { t: 'color', c: P.orange }, { t: ' = ', c: P.text }, { t: '"blue"', c: '#059669' }, { t: ';', c: P.text }],
+                    [],
+                    [{ t: '    function ', c: P.blue }, { t: 'inner', c: P.purple }, { t: '() {', c: P.text }],
+                    [{ t: '        console', c: P.purple }, { t: '.', c: P.text }, { t: 'log', c: P.blue }, { t: '(color);', c: P.text }],
+                    [{ t: '    }', c: P.text }],
+                    [{ t: '}', c: P.text }],
+                );
+            } else if (scenario === 2) {
+                // Scenario 2 — outer color removed
+                lines.push(
+                    [{ t: 'let ', c: P.blue }, { t: 'color', c: P.orange }, { t: ' = ', c: P.text }, { t: '"red"', c: '#059669' }, { t: ';', c: P.text }],
+                    [],
+                    [{ t: 'function ', c: P.blue }, { t: 'outer', c: P.purple }, { t: '() {', c: P.text }],
+                    [{ t: '    ', c: P.text }, { t: '// color removed here', c: '#9ca3af' }],
+                    [],
+                    [{ t: '    function ', c: P.blue }, { t: 'inner', c: P.purple }, { t: '() {', c: P.text }],
+                    [{ t: '        console', c: P.purple }, { t: '.', c: P.text }, { t: 'log', c: P.blue }, { t: '(color);', c: P.text }],
+                    [{ t: '    }', c: P.text }],
+                    [{ t: '}', c: P.text }],
+                );
+            } else {
+                // Scenario 3 — no color anywhere
+                lines.push(
+                    [{ t: '// no color defined anywhere', c: '#9ca3af' }],
+                    [],
+                    [{ t: 'function ', c: P.blue }, { t: 'outer', c: P.purple }, { t: '() {', c: P.text }],
+                    [],
+                    [{ t: '    function ', c: P.blue }, { t: 'inner', c: P.purple }, { t: '() {', c: P.text }],
+                    [{ t: '        console', c: P.purple }, { t: '.', c: P.text }, { t: 'log', c: P.blue }, { t: '(color);', c: P.text }],
+                    [{ t: '    }', c: P.text }],
+                    [{ t: '}', c: P.text }],
+                );
+            }
+
+            X.font = mono; X.textAlign = 'left';
+            lines.forEach((toks, i) => {
+                const ly = cy + 72 + i * 38;
+                // line number
+                X.fillStyle = '#bcc0c7'; X.font = '400 13px "SF Mono",Consolas,monospace';
+                X.fillText(String(i + 1), cx + 16, ly + 5);
+                X.font = mono;
+                let tx = cx + 46;
+                toks.forEach(tok => { X.fillStyle = tok.c; X.fillText(tok.t, tx, ly + 5); tx += X.measureText(tok.t).width });
+            });
+
+            // highlight lines based on step
+            const hlLines = [];
+            if (step >= 6 && step <= 7 && scenario === 1) hlLines.push({ line: 3, col: P.green });  // outer color = blue
+            if (step >= 4 && step <= 5) hlLines.push({ line: 6, col: P.orange });               // console.log
+            if (step >= 10 && step <= 10) hlLines.push({ line: 6, col: P.orange });
+            if (step >= 13 && scenario === 2) hlLines.push({ line: 0, col: P.green });
+
+            hlLines.forEach(hl => {
+                const ly = cy + 72 + hl.line * 38;
+                X.save(); X.globalAlpha = .15 + .1 * pulse();
+                X.fillStyle = hl.col; rr(cx + 8, ly - 14, cw - 16, 34, 6); X.fill();
+                X.restore();
+                X.save(); X.globalAlpha = .6; X.strokeStyle = hl.col; X.lineWidth = 1.5;
+                rr(cx + 8, ly - 14, cw - 16, 34, 6); X.stroke(); X.restore();
+            });
+        }
+
+        /* ── scope boxes ── */
+        function drawScopeBox(bx, by, bw, bh, label, col, colL, a, activeSearch, found, varLabel, varVal, strikethrough) {
+            X.save(); X.globalAlpha = a;
+
+            if (activeSearch) {
+                const p = .6 + .4 * pulse();
+                glow(bx, by, bw, bh, col, p);
+            }
+
+            X.fillStyle = colL + '60'; X.strokeStyle = col; X.lineWidth = activeSearch ? 3 : 2;
+            rr(bx, by, bw, bh, 16); X.fill(); X.stroke();
+
+            // label badge
+            X.fillStyle = col;
+            rr(bx + 16, by + 12, X.measureText(label).width * 1 || 140, 32, 8);
+            X.font = '700 15px "Segoe UI",system-ui,sans-serif';
+            const lw = X.measureText(label).width + 24;
+            X.fillStyle = col; rr(bx + 16, by + 12, lw, 32, 8); X.fill();
+            X.fillStyle = '#fff'; X.textAlign = 'left'; X.fillText(label, bx + 28, by + 34);
+
+            // variable display
+            if (varLabel) {
+                const vx = bx + bw - 280, vy = by + 14;
+                X.fillStyle = '#fff'; X.strokeStyle = col + '60'; X.lineWidth = 1;
+                rr(vx, vy, 250, 28, 6); X.fill(); X.stroke();
+                X.font = '600 14px "SF Mono",Consolas,monospace'; X.textAlign = 'left';
+
+                if (strikethrough) {
+                    X.save(); X.globalAlpha *= .35;
+                    X.fillStyle = P.med; X.fillText(varLabel + ' = ' + varVal, vx + 12, vy + 19);
+                    // strikethrough line
+                    const tw2 = X.measureText(varLabel + ' = ' + varVal).width;
+                    X.strokeStyle = P.red; X.lineWidth = 2;
+                    X.beginPath(); X.moveTo(vx + 10, vy + 15); X.lineTo(vx + 14 + tw2, vy + 15); X.stroke();
+                    X.restore();
+                } else {
+                    X.fillStyle = col; X.fillText(varLabel, vx + 12, vy + 19);
+                    X.fillStyle = P.med; X.fillText(' = ', vx + 12 + X.measureText(varLabel).width, vy + 19);
+                    X.fillStyle = '#059669';
+                    const eqW = X.measureText(varLabel + ' = ').width;
+                    X.fillText(varVal, vx + 12 + eqW, vy + 19);
+
+                    if (found) {
+                        X.save(); X.globalAlpha = .7 + .3 * pulse();
+                        glow(vx, vy, 250, 28, P.green, .8);
+                        X.restore();
+                        X.strokeStyle = P.green; X.lineWidth = 2;
+                        rr(vx, vy, 250, 28, 6); X.stroke();
+                    }
+                }
+            }
+
+            X.restore();
+        }
+
+        /* ── search indicator ── */
+        function drawSearchBadge(bx, by, bw, text, col, bg, a) {
+            if (a <= 0) return;
+            X.save(); X.globalAlpha = a;
+            X.font = '600 16px "Segoe UI",system-ui,sans-serif';
+            const tw = X.measureText(text).width + 30;
+            const sx = bx + bw / 2 - tw / 2, sy = by + 50;
+            X.fillStyle = bg; rr(sx, sy, tw, 34, 8); X.fill();
+            X.strokeStyle = col; X.lineWidth = 1.5; rr(sx, sy, tw, 34, 8); X.stroke();
+            X.fillStyle = col; X.textAlign = 'center'; X.fillText(text, bx + bw / 2, sy + 23);
+            X.restore();
+        }
+
+        /* ── main render ── */
+        function render() {
+            X.clearRect(0, 0, W, H); X.fillStyle = P.bg; X.fillRect(0, 0, W, H);
+
+            const a = clamp(anim);
+
+            // ── TITLE ──
+            if (step >= 0) {
+                const ta = step === 0 ? ease.out(a) : 1;
+                X.save(); X.globalAlpha = ta;
+                X.font = '700 36px "Segoe UI",system-ui,sans-serif'; X.fillStyle = P.text; X.textAlign = 'center';
+                X.fillText('JavaScript Scope Chain', W / 2, 58);
+                X.font = '400 17px "Segoe UI",system-ui,sans-serif'; X.fillStyle = P.med;
+                X.fillText('How JavaScript resolves variable lookups through nested scopes', W / 2, 88);
+                X.strokeStyle = P.grayBd; X.lineWidth = 1;
+                X.beginPath(); X.moveTo(580, 104); X.lineTo(1340, 104); X.stroke();
+                X.restore();
+            }
+
+            // Determine scenario
+            let scenario = 1;
+            if (step >= 9 && step <= 13) scenario = 2;
+            if (step >= 14) scenario = 3;
+
+            // ── CODE PANEL ──
+            if (step >= 1) {
+                const ca = step === 1 ? ease.out(a) : 1;
+                X.save(); X.globalAlpha = ca;
+                drawCode(scenario);
+                X.restore();
+            }
+
+            // ── SCOPE BOXES ──
+            if (step >= 2) {
+                const ba = step === 2 ? ease.outBack(a) : 1;
+
+                // Global
+                const gSearch = (step === 12 && scenario === 2) || (step >= 14 && step <= 15);
+                const gFound = step === 13 && scenario === 2;
+                const gVar = scenario === 1 || scenario === 2;
+                const gStrike = scenario === 3;
+                drawScopeBox(G.x, G.y, G.w, G.h, 'Global Scope', P.blue, P.blueL, ba,
+                    gSearch, gFound,
+                    gVar ? 'color' : scenario === 3 ? 'color' : null,
+                    gVar ? '"red"' : null,
+                    gStrike
+                );
+
+                // Outer
+                const oSearch = (step === 6 && scenario === 1) || (step === 11 && scenario === 2) || (step >= 14 && step <= 15);
+                const oFound = step === 7 && scenario === 1;
+                const oVar = scenario === 1;
+                const oStrike = scenario === 2 || scenario === 3;
+                drawScopeBox(O.x, O.y, O.w, O.h, 'Outer Function Scope', P.purple, P.purpleL, ba,
+                    oSearch, oFound,
+                    oVar ? 'color' : (scenario !== 3 ? 'color' : null),
+                    oVar ? '"blue"' : (scenario !== 3 ? '"blue"' : null),
+                    oStrike
+                );
+
+                // Inner
+                const iSearch = step === 4 || step === 5 || step === 10 || (step >= 14 && step <= 15);
+                drawScopeBox(I.x, I.y, I.w, I.h, 'Inner Function Scope', P.teal, P.tealL, ba,
+                    iSearch, false, null, null, false
+                );
+
+                // console.log(color) inside inner
+                if (step >= 3) {
+                    const ea2 = step === 3 ? ease.out(a) : 1;
+                    X.save(); X.globalAlpha = ea2;
+                    const cx2 = I.x + 40, cy2 = I.y + 60;
+                    X.fillStyle = '#fff'; X.strokeStyle = P.teal + '80'; X.lineWidth = 1.5;
+                    rr(cx2, cy2, 360, 44, 10); X.fill(); X.stroke();
+                    X.font = '500 16px "SF Mono","Fira Code",Consolas,monospace'; X.textAlign = 'left';
+                    X.fillStyle = P.purple; X.fillText('console', cx2 + 14, cy2 + 28);
+                    X.fillStyle = P.text; X.fillText('.', cx2 + 14 + X.measureText('console').width, cy2 + 28);
+                    X.fillStyle = P.blue; X.fillText('log', cx2 + 14 + X.measureText('console.').width, cy2 + 28);
+                    X.fillStyle = P.text; X.fillText('(color);', cx2 + 14 + X.measureText('console.log').width, cy2 + 28);
+
+                    // execution badge
+                    if (step === 3) {
+                        badge(cx2 + 370, cy2 + 16, '▶ Executing', P.greenL, P.greenD, ea2);
+                    }
+                    X.restore();
+                }
+
+                // ── SEARCH BADGES ──
+                // Scenario 1: steps 4-7
+                if (step === 4 || step === 5) {
+                    const sa = step === 4 ? ease.out(a) : 1;
+                    drawSearchBadge(I.x, I.y + 80, I.w, '🔍 Searching for "color"...', P.teal, '#fff', sa);
+                }
+                if (step === 5) {
+                    drawSearchBadge(I.x, I.y + 130, I.w, '✗ Not found in Inner Scope', P.red, P.redL, ease.out(a));
+                }
+                if (step === 7 && scenario === 1) {
+                    drawSearchBadge(O.x, O.y + 50, O.w, '✓ Found: color = "blue"', P.green, P.greenL, ease.out(a));
+                }
+
+                // Scenario 2: steps 10-13
+                if (step === 10) {
+                    drawSearchBadge(I.x, I.y + 80, I.w, '🔍 Searching for "color"...', P.teal, '#fff', 1);
+                    drawSearchBadge(I.x, I.y + 130, I.w, '✗ Not found in Inner Scope', P.red, P.redL, ease.out(a));
+                }
+                if (step === 11) {
+                    drawSearchBadge(O.x + O.w / 2 - 140, O.y + 50, 280, '✗ Not found in Outer Scope', P.red, P.redL, ease.out(a));
+                }
+                if (step === 13 && scenario === 2) {
+                    drawSearchBadge(G.x, G.y + 50, G.w / 2, '✓ Found: color = "red"', P.green, P.greenL, ease.out(a));
+                }
+
+                // Scenario 3: step 15
+                if (step === 15) {
+                    drawSearchBadge(I.x, I.y + 80, I.w, '✗ Not found anywhere!', P.red, P.redL, 1);
+                }
+
+                // ── ARROWS ──
+                // Scenario 1: inner→outer
+                if (step === 6 && scenario === 1) {
+                    const ap = ease.out(a);
+                    const fx = I.x + I.w / 2, fy = I.y;
+                    const tx = O.x + O.w / 2, ty = O.y + O.h - I.h - 130;
+
+                    // animated dashed path
+                    X.save(); X.globalAlpha = ap;
+                    X.strokeStyle = P.purple; X.lineWidth = 3;
+                    X.setLineDash([10, 7]); X.lineDashOffset = -performance.now() * .03;
+                    X.beginPath(); X.moveTo(fx, fy - 5); X.lineTo(fx, ty + 20); X.stroke();
+                    X.setLineDash([]);
+
+                    // arrowhead
+                    arrow(fx, ty + 30, fx, ty + 5, P.purple, ap, 3);
+
+                    // label
+                    X.font = '600 14px "Segoe UI",system-ui,sans-serif'; X.fillStyle = P.purple; X.textAlign = 'center';
+                    X.fillText('⬆ Look up scope chain', fx + 100, fy - 20 + (ty - fy) / 2);
+                    X.restore();
+                }
+
+                // Scenario 2: inner→outer
+                if (step === 11) {
+                    const fx = I.x + I.w / 2, fy = I.y;
+                    const ty = O.y + 60;
+                    X.save(); X.globalAlpha = 1;
+                    X.strokeStyle = P.purple; X.lineWidth = 3; X.setLineDash([10, 7]); X.lineDashOffset = -performance.now() * .03;
+                    X.beginPath(); X.moveTo(fx, fy - 5); X.lineTo(fx, ty + 20); X.stroke(); X.setLineDash([]);
+                    arrow(fx, ty + 30, fx, ty + 5, P.purple, 1, 3);
+                    X.restore();
+                }
+
+                // Scenario 2: outer→global
+                if (step === 12) {
+                    const ap2 = ease.out(a);
+                    const fx = O.x + O.w / 2, fy = O.y;
+                    const ty = G.y + 50;
+                    // also show inner→outer
+                    X.save(); X.globalAlpha = .4;
+                    X.strokeStyle = P.purple; X.lineWidth = 2; X.setLineDash([8, 6]);
+                    X.beginPath(); X.moveTo(I.x + I.w / 2, I.y - 5); X.lineTo(I.x + I.w / 2, O.y + 60 + 20); X.stroke(); X.setLineDash([]);
+                    X.restore();
+
+                    X.save(); X.globalAlpha = ap2;
+                    X.strokeStyle = P.blue; X.lineWidth = 3; X.setLineDash([10, 7]); X.lineDashOffset = -performance.now() * .03;
+                    X.beginPath(); X.moveTo(fx, fy - 5); X.lineTo(fx, ty + 20); X.stroke(); X.setLineDash([]);
+                    arrow(fx, ty + 30, fx, ty + 5, P.blue, ap2, 3);
+                    X.font = '600 14px "Segoe UI",system-ui,sans-serif'; X.fillStyle = P.blue; X.textAlign = 'center';
+                    X.fillText('⬆ Continue up chain', fx + 120, (fy + ty) / 2 + 10);
+                    X.restore();
+                }
+            }
+
+            // ── OUTPUT PANEL ──
+            if (step === 8) {
+                const oa = ease.outBack(a);
+                const ox = I.x + 40, oy = I.y + I.h - 130, ow = 400, oh = 90;
+                X.save(); X.globalAlpha = oa;
+                X.shadowColor = P.green; X.shadowBlur = 20;
+                X.fillStyle = '#111827'; rr(ox, oy, ow, oh, 12); X.fill();
+                X.shadowBlur = 0;
+                X.fillStyle = '#1f2937'; rr(ox, oy, ow, 32, 12); X.fill(); X.fillRect(ox, oy + 24, ow, 8);
+                X.font = '500 12px "Segoe UI"'; X.fillStyle = P.light; X.textAlign = 'left';
+                X.fillText('Console Output', ox + 14, oy + 21);
+
+                X.font = '600 20px "SF Mono","Fira Code",Consolas,monospace';
+                X.fillStyle = '#34d399';
+                X.fillText('> "blue"', ox + 20, oy + 65);
+
+                badge(ox + ow + 16, oy + 40, '✓ Found in Outer Scope', P.greenL, P.greenD, oa);
+                X.restore();
+            }
+
+            // Scenario 2 output
+            if (step === 13 && scenario === 2) {
+                const oa = ease.outBack(a);
+                const ox = I.x + 40, oy = I.y + I.h - 130, ow = 400, oh = 90;
+                X.save(); X.globalAlpha = oa;
+                X.shadowColor = P.green; X.shadowBlur = 20;
+                X.fillStyle = '#111827'; rr(ox, oy, ow, oh, 12); X.fill();
+                X.shadowBlur = 0;
+                X.fillStyle = '#1f2937'; rr(ox, oy, ow, 32, 12); X.fill(); X.fillRect(ox, oy + 24, ow, 8);
+                X.font = '500 12px "Segoe UI"'; X.fillStyle = P.light; X.textAlign = 'left';
+                X.fillText('Console Output', ox + 14, oy + 21);
+
+                X.font = '600 20px "SF Mono","Fira Code",Consolas,monospace';
+                X.fillStyle = '#34d399';
+                X.fillText('> "red"', ox + 20, oy + 65);
+                badge(ox + ow + 16, oy + 40, '✓ Found in Global Scope', P.greenL, P.greenD, oa);
+                X.restore();
+            }
+
+            // ── SCENARIO LABELS ──
+            if (step >= 0 && step <= 8) {
+                const sa = step === 0 ? ease.out(a) : 1;
+                X.save(); X.globalAlpha = sa * .7;
+                X.fillStyle = P.blueL; rr(62, 100, 200, 30, 6); X.fill();
+                X.font = '600 13px "Segoe UI"'; X.fillStyle = P.blueD; X.textAlign = 'left';
+                X.fillText('Scenario 1: Normal Lookup', 72, 120);
+                X.restore();
+            }
+            if (step >= 9 && step <= 13) {
+                const sa = step === 9 ? ease.out(a) : 1;
+                X.save(); X.globalAlpha = sa * .7;
+                X.fillStyle = P.orangeL; rr(62, 100, 280, 30, 6); X.fill();
+                X.font = '600 13px "Segoe UI"'; X.fillStyle = '#c2410c'; X.textAlign = 'left';
+                X.fillText('Scenario 2: Outer var removed → Global', 72, 120);
+                X.restore();
+            }
+            if (step >= 14) {
+                const sa = step === 14 ? ease.out(a) : 1;
+                X.save(); X.globalAlpha = sa * .7;
+                X.fillStyle = P.redL; rr(62, 100, 280, 30, 6); X.fill();
+                X.font = '600 13px "Segoe UI"'; X.fillStyle = P.redD; X.textAlign = 'left';
+                X.fillText('Scenario 3: Variable Not Found Anywhere', 72, 120);
+                X.restore();
+            }
+
+            // ── REFERENCE ERROR ──
+            if (step === 15) {
+                const ea3 = ease.outBack(a);
+                const ex = I.x + 40, ey = I.y + 140, ew = 540, eh = 200;
+                X.save(); X.globalAlpha = ea3;
+                X.shadowColor = P.red; X.shadowBlur = 35 * ea3;
+                X.fillStyle = '#fff'; rr(ex, ey, ew, eh, 16); X.fill();
+                X.shadowBlur = 0;
+                X.strokeStyle = P.red; X.lineWidth = 2.5;
+                rr(ex, ey, ew, eh, 16); X.stroke();
+
+                // header
+                X.fillStyle = P.red; rr(ex, ey, ew, 52, 16); X.fill(); X.fillRect(ex, ey + 40, ew, 12);
+
+                const shake = Math.sin(performance.now() * .05) * 2 * (ea3 > .8 ? 1 : 0);
+                X.save(); X.translate(shake, 0);
+                X.font = '24px "Segoe UI"'; X.textAlign = 'left'; X.fillStyle = '#fff';
+                X.fillText('⚠', ex + 18, ey + 38);
+                X.font = '700 18px "Segoe UI",system-ui,sans-serif'; X.fillStyle = '#fff';
+                X.fillText('ReferenceError', ex + 52, ey + 38);
+                X.restore();
+
+                X.font = '500 17px "SF Mono","Fira Code",Consolas,monospace';
+                X.fillStyle = P.redD; X.textAlign = 'left';
+                X.fillText("color is not defined", ex + 28, ey + 95);
+
+                X.font = '400 14px "Segoe UI",system-ui,sans-serif'; X.fillStyle = P.med;
+                X.fillText('The engine searched all scopes in the chain', ex + 28, ey + 130);
+                X.fillText('and could not find any variable named "color".', ex + 28, ey + 152);
+
+                // full chain diagram
+                const chainY = ey + 180;
+                X.font = '600 13px "Segoe UI"'; X.textAlign = 'center';
+                const labels2 = ['Inner ✗', 'Outer ✗', 'Global ✗', '❌ Error'];
+                const cols2 = [P.teal, P.purple, P.blue, P.red];
+                labels2.forEach((lb, i) => {
+                    const lx = ex + 60 + i * 130;
+                    X.fillStyle = cols2[i] + '20'; rr(lx - 40, chainY - 14, 90, 28, 6); X.fill();
+                    X.fillStyle = cols2[i]; X.fillText(lb, lx + 5, chainY + 4);
+                    if (i < 3) {
+                        arrow(lx + 50, chainY, lx + 80, chainY, P.light, .6, 2);
+                    }
+                });
+
+                X.restore();
+            }
+
+            // ── TRANSITION OVERLAY for scenario changes ──
+            if (step === 9) {
+                const ta2 = step === 9 ? ease.out(a) : 0;
+                X.save(); X.globalAlpha = ta2 * .8;
+                // Scenario change banner
+                const bw2 = 500, bh2 = 60;
+                X.fillStyle = P.orangeL; X.strokeStyle = P.orange + '80'; X.lineWidth = 2;
+                rr(W / 2 - bw2 / 2, H / 2 - bh2 / 2 - 50, bw2, bh2, 14); X.fill(); X.stroke();
+                X.font = '700 20px "Segoe UI",system-ui,sans-serif'; X.fillStyle = '#c2410c'; X.textAlign = 'center';
+                X.fillText('Scenario 2: Remove outer color', W / 2, H / 2 - 30);
+                X.font = '400 15px "Segoe UI"'; X.fillStyle = P.med;
+                X.fillText('What happens when the lookup continues?', W / 2, H / 2 + 2);
+                X.restore();
+            }
+
+            if (step === 14) {
+                const ta3 = ease.out(a);
+                X.save(); X.globalAlpha = ta3 * .8;
+                const bw3 = 520, bh3 = 60;
+                X.fillStyle = P.redL; X.strokeStyle = P.red + '80'; X.lineWidth = 2;
+                rr(W / 2 - bw3 / 2, H / 2 - bh3 / 2 - 50, bw3, bh3, 14); X.fill(); X.stroke();
+                X.font = '700 20px "Segoe UI",system-ui,sans-serif'; X.fillStyle = P.redD; X.textAlign = 'center';
+                X.fillText('Scenario 3: No "color" defined anywhere', W / 2, H / 2 - 30);
+                X.font = '400 15px "Segoe UI"'; X.fillStyle = P.med;
+                X.fillText('What happens when the entire chain fails?', W / 2, H / 2 + 2);
+                X.restore();
+            }
+
+            // scope chain diagram (right side, always visible after step 2)
+            if (step >= 2) {
+                const da = step === 2 ? ease.out(a) : 1;
+                X.save(); X.globalAlpha = da * .6;
+                const dx = G.x + G.w - 180, dy = G.y + G.h - 200;
+                X.font = '600 13px "Segoe UI"'; X.textAlign = 'center';
+                X.fillStyle = P.light; X.fillText('Scope Chain', dx, dy);
+
+                const chain = [
+                    { label: 'Inner', col: P.teal },
+                    { label: 'Outer', col: P.purple },
+                    { label: 'Global', col: P.blue },
+                ];
+                chain.forEach((c, i) => {
+                    const cy3 = dy + 20 + i * 44;
+                    X.fillStyle = c.col + '20'; rr(dx - 50, cy3, 100, 30, 6); X.fill();
+                    X.strokeStyle = c.col; X.lineWidth = 1.5; rr(dx - 50, cy3, 100, 30, 6); X.stroke();
+                    X.fillStyle = c.col; X.font = '600 12px "Segoe UI"'; X.fillText(c.label, dx, cy3 + 20);
+                    if (i < 2) {
+                        arrow(dx, cy3 + 32, dx, cy3 + 42, P.light, .5, 1.5);
+                    }
+                });
+                X.restore();
+            }
+        }
+
+        /* ── loop ── */
+        let lastT = 0;
+        function loop(ts) {
+            const dt = (ts - lastT) / 1000; lastT = ts;
+            anim = clamp(anim + dt * (1000 / ANIM_DUR));
+            render();
+            requestAnimationFrame(loop);
+        }
+        requestAnimationFrame(loop);
+    </script>
+</body>
+
+</html>
