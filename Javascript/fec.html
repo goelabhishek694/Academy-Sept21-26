@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JavaScript Call Stack and Execution Context Visualizer</title>
+  <style>
+    :root {
+      --bg: #f6f8fc;
+      --panel: #ffffff;
+      --ink: #0f172a;
+      --muted: #64748b;
+      --border: #dbe4f0;
+      --blue: #2563eb;
+      --blue-soft: #eff6ff;
+      --green: #15803d;
+      --green-soft: #ecfdf3;
+      --purple: #6d28d9;
+      --purple-soft: #f5f3ff;
+      --orange: #ea580c;
+      --orange-soft: #fff7ed;
+      --red: #b91c1c;
+      --shadow: 0 18px 45px rgba(15, 23, 42, 0.10);
+      --radius: 20px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 28rem), radial-gradient(circle at top right, rgba(109, 40, 217, 0.10), transparent 24rem), var(--bg);
+      color: var(--ink);
+      font-family: var(--sans);
+      min-height: 100vh;
+    }
+    .app { width: min(1480px, calc(100vw - 32px)); margin: 24px auto; }
+    .hero {
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      padding: 22px 26px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 20px;
+      align-items: center;
+      backdrop-filter: blur(10px);
+    }
+    .hero h1 { margin: 0; font-size: clamp(1.5rem, 3vw, 2.4rem); line-height: 1.1; letter-spacing: -0.03em; }
+    .hero p { margin: 8px 0 0; color: var(--muted); max-width: 760px; font-size: 1rem; }
+    .controls { display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+    button {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: white;
+      color: var(--ink);
+      padding: 10px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.92rem;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+    }
+    button:hover { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(15, 23, 42, 0.10); }
+    button.primary { background: var(--blue); border-color: var(--blue); color: white; }
+    button.danger { color: var(--red); }
+    button:disabled { cursor: not-allowed; opacity: 0.45; transform: none; box-shadow: none; }
+    .progress-row { display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center; margin: 16px 2px 20px; }
+    .progress-track { height: 12px; background: #e7eef8; border-radius: 999px; overflow: hidden; border: 1px solid #d5e0ee; }
+    .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--blue), var(--purple)); border-radius: inherit; transition: width 0.35s ease; }
+    .step-count { color: var(--muted); font-weight: 700; font-size: 0.92rem; white-space: nowrap; }
+    .layout { display: grid; grid-template-columns: 0.95fr 1.35fr 0.8fr; gap: 18px; align-items: stretch; }
+    .panel { background: rgba(255, 255, 255, 0.9); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+    .panel-header { padding: 16px 18px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 64px; }
+    .panel-header h2 { margin: 0; font-size: 1.1rem; letter-spacing: -0.02em; }
+    .chip { border-radius: 999px; padding: 6px 10px; font-size: 0.78rem; font-weight: 800; white-space: nowrap; border: 1px solid currentColor; }
+    .chip.blue { color: var(--blue); background: var(--blue-soft); }
+    .chip.green { color: var(--green); background: var(--green-soft); }
+    .chip.purple { color: var(--purple); background: var(--purple-soft); }
+    .chip.orange { color: var(--orange); background: var(--orange-soft); }
+    .code-panel { background: #111827; color: #e5e7eb; border-radius: 0 0 var(--radius) var(--radius); padding: 14px 0; font-family: var(--mono); font-size: 0.94rem; line-height: 1.5; min-height: 574px; }
+    .code-line { display: grid; grid-template-columns: 46px 1fr; gap: 10px; padding: 4px 16px 4px 0; border-left: 4px solid transparent; transition: background 0.2s ease, border-color 0.2s ease; white-space: pre; }
+    .code-line .num { color: #6b7280; text-align: right; user-select: none; }
+    .code-line.active { background: rgba(37, 99, 235, 0.22); border-left-color: #60a5fa; }
+    .kw { color: #c084fc; }
+    .fn { color: #93c5fd; }
+    .str { color: #86efac; }
+    .num-lit { color: #fbbf24; }
+    .middle { display: grid; grid-template-rows: auto 1fr; gap: 18px; }
+    .explanation { padding: 18px; display: grid; gap: 12px; }
+    .step-title { display: flex; gap: 12px; align-items: center; }
+    .step-badge { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: var(--purple); color: white; font-weight: 900; flex: 0 0 auto; }
+    .step-title h3 { margin: 0; font-size: 1.2rem; letter-spacing: -0.02em; }
+    .step-description { margin: 0; color: var(--muted); font-size: 0.98rem; line-height: 1.55; }
+    .phase-strip { display: flex; flex-wrap: wrap; gap: 8px; }
+    .visual-grid { display: grid; grid-template-columns: 0.78fr 1.22fr; gap: 18px; padding: 18px; }
+    .stack-area, .context-area { border: 1px solid var(--border); border-radius: 18px; background: linear-gradient(180deg, #ffffff, #f8fbff); min-height: 448px; overflow: hidden; }
+    .subheader { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-weight: 900; color: #1f2937; }
+    .stack { height: 382px; padding: 16px; display: flex; flex-direction: column-reverse; justify-content: flex-start; gap: 12px; background: linear-gradient(90deg, transparent 23px, rgba(37, 99, 235, 0.08) 24px, transparent 25px), linear-gradient(180deg, #ffffff, #f8fbff); position: relative; }
+    .stack::before { content: "top"; position: absolute; top: 12px; right: 16px; color: var(--muted); font-size: 0.75rem; font-weight: 800; text-transform: uppercase; }
+    .stack-frame { border: 2px solid var(--purple); background: var(--purple-soft); color: #321064; border-radius: 16px; padding: 14px; box-shadow: 0 10px 20px rgba(109, 40, 217, 0.15); animation: pushIn 0.28s ease; }
+    .stack-frame.global { border-color: var(--blue); background: var(--blue-soft); color: #0f347a; }
+    .stack-frame.function { border-color: var(--green); background: var(--green-soft); color: #0d4f25; }
+    .frame-title { font-weight: 900; margin-bottom: 6px; }
+    .frame-meta { font-size: 0.83rem; color: currentColor; opacity: 0.8; }
+    .empty-stack { height: 100%; display: grid; place-items: center; color: var(--muted); font-weight: 800; text-align: center; border: 2px dashed #cbd5e1; border-radius: 16px; background: rgba(255, 255, 255, 0.7); }
+    .context-content { padding: 16px; display: grid; gap: 14px; max-height: 382px; overflow: auto; }
+    .context-card { border: 1px solid var(--border); border-radius: 16px; background: white; overflow: hidden; animation: fadeUp 0.22s ease; }
+    .context-card.active-context { border-color: var(--purple); box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.10); }
+    .context-title { padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); background: #fbfdff; font-weight: 900; }
+    .memory-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    .memory-table th, .memory-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e5edf7; vertical-align: top; }
+    .memory-table th { color: var(--muted); font-size: 0.77rem; text-transform: uppercase; letter-spacing: 0.04em; background: #f8fafc; }
+    .memory-table tr:last-child td { border-bottom: none; }
+    .value { font-family: var(--mono); font-weight: 800; color: #1d4ed8; }
+    .value.ref { color: #6d28d9; }
+    .value.return { color: #15803d; }
+    .side-note { border: 1px dashed #cbd5e1; border-radius: 14px; padding: 12px 14px; background: #f8fafc; color: var(--muted); font-size: 0.9rem; line-height: 1.45; }
+    .console-body { min-height: 574px; background: #0f172a; color: #e2e8f0; padding: 16px; font-family: var(--mono); display: flex; flex-direction: column; gap: 10px; }
+    .console-line { border-left: 3px solid #22c55e; padding: 8px 10px; background: rgba(34, 197, 94, 0.08); border-radius: 8px; animation: fadeUp 0.22s ease; line-height: 1.45; }
+    .console-empty { color: #94a3b8; border: 1px dashed rgba(148, 163, 184, 0.35); border-radius: 12px; padding: 16px; text-align: center; line-height: 1.45; }
+    .legend { margin-top: 18px; background: rgba(255, 255, 255, 0.92); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px 18px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+    .legend-item { border-left: 4px solid var(--blue); padding-left: 12px; }
+    .legend-item:nth-child(2) { border-color: var(--green); }
+    .legend-item:nth-child(3) { border-color: var(--purple); }
+    .legend-item:nth-child(4) { border-color: var(--orange); }
+    .legend-item strong { display: block; margin-bottom: 4px; }
+    .legend-item span { color: var(--muted); font-size: 0.9rem; line-height: 1.4; }
+    @keyframes pushIn { from { opacity: 0; transform: translateY(-12px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    @media (max-width: 1180px) { .layout { grid-template-columns: 1fr; } .code-panel, .console-body { min-height: auto; } .visual-grid { grid-template-columns: 1fr; } .legend { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 720px) { .hero { grid-template-columns: 1fr; } .controls { justify-content: flex-start; } .legend { grid-template-columns: 1fr; } .code-panel { font-size: 0.82rem; overflow-x: auto; } .code-line { min-width: 520px; } }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="hero">
+      <div>
+        <h1>JavaScript Call Stack and Execution Context Visualizer</h1>
+        <p>Step through a program and watch how the Global Execution Context is created, how a Function Execution Context is pushed to the call stack, and how console output appears.</p>
+      </div>
+      <div class="controls">
+        <button id="prevBtn">Previous</button>
+        <button id="nextBtn" class="primary">Next Step</button>
+        <button id="playBtn">Auto Play</button>
+        <button id="resetBtn" class="danger">Reset</button>
+      </div>
+    </section>
+    <div class="progress-row"><div class="progress-track"><div id="progressFill" class="progress-fill"></div></div><div id="stepCount" class="step-count">Step 1 of 12</div></div>
+    <section class="layout">
+      <article class="panel"><div class="panel-header"><h2>Code</h2><span class="chip blue">line highlight</span></div><div id="codePanel" class="code-panel"></div></article>
+      <section class="middle">
+        <article class="panel explanation"><div class="step-title"><div id="stepBadge" class="step-badge">1</div><h3 id="stepTitle">Program is ready</h3></div><p id="stepDescription" class="step-description"></p><div id="phaseStrip" class="phase-strip"></div></article>
+        <article class="panel"><div class="panel-header"><h2>Call Stack and Execution Contexts</h2><span id="activePhaseChip" class="chip purple">not started</span></div><div class="visual-grid"><section class="stack-area"><div class="subheader"><span>Call Stack</span><span class="chip orange">LIFO</span></div><div id="stack" class="stack"></div></section><section class="context-area"><div class="subheader"><span>Active Context Memory</span><span class="chip blue">environment records</span></div><div id="contextContent" class="context-content"></div></section></div></article>
+      </section>
+      <article class="panel"><div class="panel-header"><h2>Console</h2><span class="chip green">output</span></div><div id="consoleBody" class="console-body"></div></article>
+    </section>
+    <section class="legend"><div class="legend-item"><strong>Execution Context</strong><span>A running workspace created for global code or for a function call.</span></div><div class="legend-item"><strong>Creation Phase</strong><span>JavaScript prepares memory: variables, parameters, and function declarations.</span></div><div class="legend-item"><strong>Execution Phase</strong><span>JavaScript runs code line by line and updates memory.</span></div><div class="legend-item"><strong>Call Stack</strong><span>Tracks execution contexts. New function calls are pushed; completed calls are popped.</span></div></section>
+  </main>
+<script>
+const codeLines=[{n:1,html:'<span class="kw">var</span> globalCount = <span class="num-lit">1</span>;'},{n:2,html:'<span class="fn">console</span>.log(<span class="str">"Global start:"</span>, globalCount);'},{n:3,html:''},{n:4,html:'<span class="kw">function</span> <span class="fn">double</span>(value) {'},{n:5,html:'  <span class="kw">var</span> result = value * <span class="num-lit">2</span>;'},{n:6,html:'  <span class="fn">console</span>.log(<span class="str">"Inside double:"</span>, result);'},{n:7,html:'  <span class="kw">return</span> result;'},{n:8,html:'}'},{n:9,html:''},{n:10,html:'<span class="kw">var</span> finalValue = <span class="fn">double</span>(globalCount);'},{n:11,html:'<span class="fn">console</span>.log(<span class="str">"Global end:"</span>, finalValue);'}];
+const steps=[{title:'Program loaded, no context yet',phase:'not started',highlight:[],description:'The JavaScript engine has the source code, but no execution context has been pushed to the call stack yet.',chips:['Source code is available','Call stack is empty'],stack:[],contexts:[],console:[]},{title:'Global Execution Context is pushed',phase:'global context created',highlight:[],description:'Before running the script, JavaScript creates the Global Execution Context and places it on the call stack.',chips:['Push: Global Execution Context','Call stack starts working'],stack:['Global Execution Context'],contexts:[{name:'Global Execution Context',phase:'created',rows:[['Memory','not prepared yet']],note:'The context exists. Next, JavaScript will enter the creation phase.'}],console:[]},{title:'Global Creation Phase',phase:'creation phase',highlight:[1,4,10],description:'JavaScript scans the global code and prepares memory before executing line 1.',chips:['globalCount → undefined','finalValue → undefined','double → function reference'],stack:['Global Execution Context'],contexts:[{name:'Global Execution Context',phase:'Creation Phase',rows:[['globalCount','<span class="value">undefined</span>'],['finalValue','<span class="value">undefined</span>'],['double','<span class="value ref">function reference</span>']],note:'This memory table is technically called an Environment Record.'}],console:[]},{title:'Line 1 executes',phase:'execution phase',highlight:[1],description:'The assignment runs. globalCount is updated from undefined to 1.',chips:['Line 1','Update global memory'],stack:['Global Execution Context'],contexts:[{name:'Global Execution Context',phase:'Execution Phase',rows:[['globalCount','<span class="value">1</span>'],['finalValue','<span class="value">undefined</span>'],['double','<span class="value ref">function reference</span>']],note:'Execution updates the same environment record created during the creation phase.'}],console:[]},{title:'Line 2 executes',phase:'execution phase',highlight:[2],description:'console.log reads globalCount from the Global Execution Context and prints the value.',chips:['Read globalCount','Print output'],stack:['Global Execution Context'],contexts:[{name:'Global Execution Context',phase:'Execution Phase',rows:[['globalCount','<span class="value">1</span>'],['finalValue','<span class="value">undefined</span>'],['double','<span class="value ref">function reference</span>']],note:'No new execution context is shown for console.log in this teaching visual. We are focusing on your function call.'}],console:['Global start: 1']},{title:'Line 10 reaches a function call',phase:'execution phase',highlight:[10],description:'JavaScript reaches double(globalCount). Before finalValue can be assigned, the function call must finish.',chips:['Read double','Read globalCount','Prepare function call'],stack:['Global Execution Context'],contexts:[{name:'Global Execution Context',phase:'Execution Phase',rows:[['globalCount','<span class="value">1</span>'],['finalValue','<span class="value">undefined</span>'],['double','<span class="value ref">function reference</span>']],note:'finalValue is still undefined because the right side has not returned yet.'}],console:['Global start: 1']},{title:'Function Execution Context is pushed',phase:'function creation phase',highlight:[4,5,6,7,8],description:'Calling double creates a new Function Execution Context. This context also has its own creation phase.',chips:['Push: double Execution Context','Parameter value → 1','result → undefined'],stack:['Global Execution Context','double Execution Context'],contexts:[{name:'double Execution Context',phase:'Creation Phase',rows:[['value','<span class="value">1</span>'],['result','<span class="value">undefined</span>']],note:'The parameter receives the argument value. var result is prepared as undefined.'},{name:'Global Execution Context',phase:'paused',rows:[['globalCount','<span class="value">1</span>'],['finalValue','<span class="value">undefined</span>'],['double','<span class="value ref">function reference</span>']],note:'The global context stays on the stack, but it is paused while double runs.'}],console:['Global start: 1']},{title:'Line 5 executes inside double',phase:'function execution phase',highlight:[5],description:'The function now runs line by line. result is calculated using value and updated to 2.',chips:['result = value * 2','result → 2'],stack:['Global Execution Context','double Execution Context'],contexts:[{name:'double Execution Context',phase:'Execution Phase',rows:[['value','<span class="value">1</span>'],['result','<span class="value">2</span>']],note:'This update happens inside the function context, not the global context.'},{name:'Global Execution Context',phase:'paused',rows:[['globalCount','<span class="value">1</span>'],['finalValue','<span class="value">undefined</span>'],['double','<span class="value ref">function reference</span>']],note:'Global execution will resume after double returns.'}],console:['Global start: 1']},{title:'Line 6 executes inside double',phase:'function execution phase',highlight:[6],description:'console.log reads result from the function context and prints the value.',chips:['Read result','Print output'],stack:['Global Execution Context','double Execution Context'],contexts:[{name:'double Execution Context',phase:'Execution Phase',rows:[['value','<span class="value">1</span>'],['result','<span class="value">2</span>']],note:'The closest memory table is the function environment record, so result is found there.'},{name:'Global Execution Context',phase:'paused',rows:[['globalCount','<span class="value">1</span>'],['finalValue','<span class="value">undefined</span>'],['double','<span class="value ref">function reference</span>']],note:'Global memory is still unchanged.'}],console:['Global start: 1','Inside double: 2']},{title:'Line 7 returns and function context is popped',phase:'function returns',highlight:[7],description:'double returns 2. Its execution context is removed from the call stack. Control goes back to line 10 in global code.',chips:['Return value: 2','Pop: double Execution Context'],stack:['Global Execution Context'],contexts:[{name:'Global Execution Context',phase:'resumed',rows:[['globalCount','<span class="value">1</span>'],['finalValue','<span class="value">undefined</span>'],['double','<span class="value ref">function reference</span>'],['returned value','<span class="value return">2</span>']],note:'The function context is gone. Only its returned value comes back.'}],console:['Global start: 1','Inside double: 2']},{title:'Line 10 completes assignment',phase:'global execution phase',highlight:[10],description:'The returned value 2 is assigned to finalValue in the Global Execution Context.',chips:['finalValue → 2','Global context continues'],stack:['Global Execution Context'],contexts:[{name:'Global Execution Context',phase:'Execution Phase',rows:[['globalCount','<span class="value">1</span>'],['finalValue','<span class="value">2</span>'],['double','<span class="value ref">function reference</span>']],note:'Now the global memory table has the function result.'}],console:['Global start: 1','Inside double: 2']},{title:'Line 11 executes and global context is popped',phase:'program complete',highlight:[11],description:'The final console.log runs. After the script completes, the Global Execution Context is removed from the call stack.',chips:['Print final output','Pop: Global Execution Context','Call stack empty'],stack:[],contexts:[],console:['Global start: 1','Inside double: 2','Global end: 2']}];
+let currentStep=0,isPlaying=false,intervalId=null;
+const $=id=>document.getElementById(id);const codePanel=$('codePanel'),stackEl=$('stack'),contextContent=$('contextContent'),consoleBody=$('consoleBody'),stepTitle=$('stepTitle'),stepDescription=$('stepDescription'),stepBadge=$('stepBadge'),phaseStrip=$('phaseStrip'),activePhaseChip=$('activePhaseChip'),progressFill=$('progressFill'),stepCount=$('stepCount'),prevBtn=$('prevBtn'),nextBtn=$('nextBtn'),playBtn=$('playBtn'),resetBtn=$('resetBtn');
+function renderCode(highlight){const highlighted=new Set(highlight);codePanel.innerHTML=codeLines.map(line=>`<div class="code-line ${highlighted.has(line.n)?'active':''}"><span class="num">${line.n}</span><span>${line.html||'&nbsp;'}</span></div>`).join('')}
+function frameClass(name){if(name.includes('Global'))return'global';if(name.includes('double'))return'function';return''}
+function renderStack(stack){if(!stack.length){stackEl.innerHTML='<div class="empty-stack">Call stack is empty</div>';return}stackEl.innerHTML=stack.map(name=>`<div class="stack-frame ${frameClass(name)}"><div class="frame-title">${name}</div><div class="frame-meta">${name.includes('Global')?'Script workspace':'Function call workspace'}</div></div>`).join('')}
+function renderContexts(contexts){if(!contexts.length){contextContent.innerHTML='<div class="side-note">No active execution context remains. The program has completed.</div>';return}contextContent.innerHTML=contexts.map((ctx,index)=>`<section class="context-card ${index===0?'active-context':''}"><div class="context-title"><span>${ctx.name}</span><span class="chip ${ctx.phase.toLowerCase().includes('creation')?'blue':ctx.phase.toLowerCase().includes('execution')?'green':'purple'}">${ctx.phase}</span></div><table class="memory-table"><thead><tr><th>Name</th><th>Value / Reference</th></tr></thead><tbody>${ctx.rows.map(([name,value])=>`<tr><td>${name}</td><td>${value}</td></tr>`).join('')}</tbody></table><div class="side-note">${ctx.note}</div></section>`).join('')}
+function renderConsole(lines){if(!lines.length){consoleBody.innerHTML='<div class="console-empty">No console output yet. Output appears only when console.log runs.</div>';return}consoleBody.innerHTML=lines.map(line=>`<div class="console-line">${line}</div>`).join('')}
+function chipClass(text){const lower=text.toLowerCase();if(lower.includes('push')||lower.includes('pop'))return'purple';if(lower.includes('creation')||lower.includes('undefined'))return'blue';if(lower.includes('print')||lower.includes('execution'))return'green';return'orange'}
+function renderPhaseStrip(chips){phaseStrip.innerHTML=chips.map(chip=>`<span class="chip ${chipClass(chip)}">${chip}</span>`).join('')}
+function render(){const step=steps[currentStep];renderCode(step.highlight);renderStack(step.stack);renderContexts(step.contexts);renderConsole(step.console);renderPhaseStrip(step.chips);stepTitle.textContent=step.title;stepDescription.textContent=step.description;stepBadge.textContent=currentStep+1;activePhaseChip.textContent=step.phase;progressFill.style.width=`${((currentStep+1)/steps.length)*100}%`;stepCount.textContent=`Step ${currentStep+1} of ${steps.length}`;prevBtn.disabled=currentStep===0;nextBtn.disabled=currentStep===steps.length-1}
+function nextStep(){if(currentStep<steps.length-1){currentStep+=1;render()}else{stopAutoPlay()}}
+function prevStep(){if(currentStep>0){currentStep-=1;render()}}
+function reset(){stopAutoPlay();currentStep=0;render()}
+function startAutoPlay(){isPlaying=true;playBtn.textContent='Pause';intervalId=setInterval(nextStep,1800)}
+function stopAutoPlay(){isPlaying=false;playBtn.textContent='Auto Play';if(intervalId){clearInterval(intervalId);intervalId=null}}
+nextBtn.addEventListener('click',nextStep);prevBtn.addEventListener('click',prevStep);resetBtn.addEventListener('click',reset);playBtn.addEventListener('click',()=>isPlaying?stopAutoPlay():startAutoPlay());window.addEventListener('keydown',e=>{if(e.key==='ArrowRight')nextStep();if(e.key==='ArrowLeft')prevStep();if(e.key==='Escape')reset()});render();
+</script>
+</body>
+</html>
