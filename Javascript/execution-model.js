@@ -243,17 +243,91 @@
 // myCounter();
 // myCounter();
 
-function outer() {
-  let x = 10;
+// function outer() {
+//   let x = 10;
 
-  x = 20;
-  function inner() {
-    console.log(x);
-  }
+//   x = 20;
+//   function inner() {
+//     console.log(x);
+//   }
 
-  return inner;
+//   return inner;
+// }
+
+
+// const fn = outer();
+// fn();
+
+//why do i want the state to be private ?
+
+let count = 0;
+
+function addOne(num) {
+  let result = num + 1;
+  count++;
+  return result;
 }
 
+console.log(addOne(5));
+console.log(addOne(5));
+console.log(addOne(5));
+count =10; // to avoid this kind of ovrride we want to our variable to be private, so that no one can alter it acept the function. 
+console.log(count);
 
-const fn = outer();
-fn();
+//closures -> to create a private variable
+// example of data encapsulate through closures
+
+function createCounter(){
+  let count = 0;
+
+  function addOne(num) {
+    let result = num + 1;
+    count++;
+    console.log(`Called ${count} times`)
+    return result;
+  } 
+
+  return addOne;
+}
+
+const counter = createCounter();
+
+counter(5);
+counter(5);
+counter(5);
+
+
+function createBankAccount(initialBalance) {
+  let balance = initialBalance;
+
+  function deposit(amount) {
+    balance = balance + amount;
+    console.log("Deposited: " + amount + ". New balance: " + balance);
+  }
+
+  function withdraw(amount) {
+    if (amount > balance) {
+      console.log("Insufficient funds. Balance: " + balance);
+      return;
+    }
+    balance = balance - amount;
+    console.log("Withdrew: " + amount + ". New balance: " + balance);
+  }
+
+  function getBalance() {
+    return balance;
+  }
+
+  return {
+    deposit: deposit,
+    withdraw: withdraw,
+    getBalance: getBalance
+  };
+}
+
+const myAccount = createBankAccount(100);
+
+myAccount.deposit(100);
+myAccount.withdraw(200);
+console.log(`Current balance: ${myAccount.getBalance()}`);
+myAccount.withdraw(2000);
