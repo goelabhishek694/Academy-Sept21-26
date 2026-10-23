@@ -129,3 +129,115 @@ console.log(borrowBook(library, "The Hobbit"));
 console.log(borrowBook(library, "The Hobbit"));
 console.log(returnBook(library, "The Hobbit"));
 console.log(borrowBook(library, "Unknown Book"));
+
+function maker(x) {
+  return function(y) {
+    return x + y;
+  };
+}
+
+const add5 = maker(5);
+const add10 = maker(10);
+console.log(add5(3));
+console.log(add10(3));
+
+// Write a function called createEncoder that takes a number (a shift value). It returns a function that takes a message string and shifts every letter forward in the alphabet by that number. Non-letter characters stay the same. For simplicity, handle only lowercase letters and wrap around (so z shifted by 1 becomes a).
+
+// const encode3 = createEncoder(3);
+// console.log(encode3("hello"));     // "khoor"
+// console.log(encode3("xyz"));       // "abc"
+
+// const encode1 = createEncoder(1);
+// console.log(encode1("abc"));       // "bcd"
+
+
+function createEncoder(shift){
+  
+  return function(message){
+    message = message.split(" ");
+    let encodedMsg = "";
+    for(const word of message){
+      encodedMsg = encodedMsg+ " " +encode(word);
+    }
+    return encodedMsg;
+  }
+
+  function encode(message){
+    message = message.toLowerCase();
+    let encodedStr = "";
+    const alphabets = "abcdefghijklmnopqrstuvwxyz";
+    for(let i=0;i<message.length;i++){
+      const char = message[i];
+      const index = alphabets.indexOf(char);
+      if(index==-1) return `Only alphabets are allowed`
+      const shiftedIdx = (index+3)%26;
+      encodedStr += alphabets[shiftedIdx];
+    }
+    return encodedStr;
+  }
+}
+
+const encoder3 = createEncoder(3);
+const encodedStr = encoder3("Hello World");
+console.log(encodedStr);
+
+
+//instead of using alphabets astr, we can use ascii itself . fromCharCode() , charCodeAt()
+// we need to solve this for strings and not just words . 
+
+
+// Write a function called limitCalls that takes two arguments: a function fn and a number maxCalls. It returns a new function that works just like fn, but only for the first maxCalls invocations. After that, it returns the string "Call limit reached".
+
+// function sayHello(name) {
+//   return `Hello, ${name}!`;
+// }
+
+// const limitedHello = limitCalls(sayHello, 3);
+// console.log(limitedHello("Alice"));   // "Hello, Alice!"
+// console.log(limitedHello("Bob"));     // "Hello, Bob!"
+// console.log(limitedHello("Charlie")); // "Hello, Charlie!"
+// console.log(limitedHello("Diana"));   // "Call limit reached"
+// console.log(limitedHello("Eve"));     // "Call limit reached"
+
+
+// Problem Statement:
+
+// Build a To-Do List Manager using a closure-based module pattern. Create a function called createTodoManager that returns an object with these methods:
+
+// addTask(title) — adds a task with a unique ID, the given title, and completed: false.
+// completeTask(id) — marks a task as completed.
+// removeTask(id) — removes a task by ID.
+// getTasks() — returns all tasks.
+// getPending() — returns only tasks that are not completed.
+// getCompleted() — returns only completed tasks.
+// The internal task array and the ID counter should NOT be accessible from outside. They should be private, enclosed in the closure.
+
+const myTodos = createTodoManager();
+
+myTodos.addTask("Learn closures");
+myTodos.addTask("Build a project");
+myTodos.addTask("Push to GitHub");
+
+console.log(myTodos.getTasks());
+// [
+//   { id: 1, title: "Learn closures", completed: false },
+//   { id: 2, title: "Build a project", completed: false },
+//   { id: 3, title: "Push to GitHub", completed: false }
+// ]
+
+myTodos.completeTask(1);
+console.log(myTodos.getCompleted());
+// [ { id: 1, title: "Learn closures", completed: true } ]
+
+console.log(myTodos.getPending());
+// [
+//   { id: 2, title: "Build a project", completed: false },
+//   { id: 3, title: "Push to GitHub", completed: false }
+// ]
+
+myTodos.removeTask(2);
+console.log(myTodos.getTasks());
+// [
+//   { id: 1, title: "Learn closures", completed: true },
+//   { id: 3, title: "Push to GitHub", completed: false }
+// ]
