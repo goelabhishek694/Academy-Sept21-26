@@ -54,3 +54,34 @@ newDiv.classList.add("greet");
 
 let body = document.querySelector("body");
 body.appendChild(newDiv);
+
+//fixing the list item
+
+// 1.create ele
+const li = document.createElement("li");
+
+//2. configure
+li.innerText=7;
+
+//3. add
+
+const ul = document.querySelector("ul");
+// ul.appendChild(li);
+
+const allLi = document.querySelectorAll("li");
+console.log(allLi[6]);
+
+             //node to be inserted, refNode before which we have to add
+ul.insertBefore(li, allLi[6]);
+
+//ClassList
+// method to add remove toggle and check css classes
+
+const box = document.querySelector(".box");
+
+box.classList.add("aqua");
+box.classList.remove("aqua");
+//if pink is there remove it, if it is not there add it . 
+box.classList.toggle("pink");
+
+box.classList.contains("pink");
