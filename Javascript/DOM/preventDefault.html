@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>preventDefault Demo</title>
+  <style>
+    body { font-family: sans-serif; padding: 40px; }
+    a { font-size: 18px; color: blue; }
+  </style>
+</head>
+<body>
+  <h2>preventDefault Demo</h2>
+    <a href="https://www.google.com/" id="myLink">Go to Google</a>
+  <br><br>
+  <form id="myForm">
+    <input type="text" placeholder="Type something..." />
+    <p id="output"></p>
+    <button type="submit">Submit</button>
+  </form>
+  
+  <script>
+    // Without preventDefault, clicking the link navigates away
+    const link = document.querySelector("#myLink");
+    link.addEventListener("click", function (event) {
+      event.preventDefault();
+      console.log("Link click intercepted. No navigation.");
+      document.querySelector("#output").textContent =
+        "Link was clicked, but we stayed on the page!";
+    });
+    // Without preventDefault, submitting the form reloads the page
+    const form = document.querySelector("#myForm");
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      console.log("Form submission intercepted.");
+      document.querySelector("#output").textContent =
+        "Form was submitted, but the page did not reload!";
+    });
+  </script>
+
+</body>
+</html>

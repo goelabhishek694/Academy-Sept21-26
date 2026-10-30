@@ -16,7 +16,7 @@
     </div>
     <button id="btn-1">Click Me</button>
     <button class="action-btn">Submit</button>
-    <button class="action-btn">Cancel</button>
+    <button class="action-btn" onclick="doFirst(); doSecond();" onkeydown="" onmouseover="" >Cancel</button>
 
     <ul>
         <li>1</li>
@@ -35,6 +35,15 @@
 
 
     <script src="./script.js"></script>
+    <script>
+        function doFirst(){
+            console.log("first thing")
+        }
+
+        function doSecond(){
+            console.log("second thing")
+        }
+    </script>
 </body>
 
 </html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Movie Filter</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: sans-serif;
+      padding: 40px;
+      background-color: #f5f5f5;
+    }
+    h1 { margin-bottom: 20px; }
+    #searchInput {
+      padding: 10px 15px;
+      width: 300px;
+      font-size: 16px;
+      border: 2px solid #ccc;
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+    #movieList {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .movie-card {
+      background: white;
+      padding: 15px 20px;
+      border-radius: 6px;
+      font-size: 18px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <h1>Movie Browser</h1>
+  <input type="text" id="searchInput" placeholder="Search movies..." />
+  <div id="movieList">
+    <div class="movie-card">The Dark Knight</div>
+    <div class="movie-card">Inception</div>
+    <div class="movie-card">Interstellar</div>
+    <div class="movie-card">The Matrix</div>
+    <div class="movie-card">Pulp Fiction</div>
+    <div class="movie-card">The Godfather</div>
+  </div>
+  <script src="./movie-filter.js"></script>
+</body>
+</html>

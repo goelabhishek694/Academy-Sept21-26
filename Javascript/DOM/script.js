@@ -36,6 +36,10 @@ btn.addEventListener("click", function(){
     console.log("btn is clicked");
 });
 
+btn.addEventListener("click", function(){
+    console.log("btn is clicked 2nd");
+});
+
 btn.addEventListener("dblclick", function(){
     console.log("btn is double clicked");
 });
