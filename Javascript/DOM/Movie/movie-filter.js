@@ -130,10 +130,47 @@
 // <---------Production ready code --------->
 
 // Keyboard search filter
-
 const searchInput = document.querySelector("#searchInput");
 const movieList = document.querySelector("#movieList");
 const addBtn = document.getElementById("addMovie");
+
+const defaultMovies = [
+    "The Dark Knight",
+    "Inception",
+    "Interstellar",
+    "The Matrix",
+    "Pulp Fiction",
+    "The Godfather",
+    "Fight Club",
+    "Forrest Gump",
+    "The Shawshank Redemption",
+    "Gladiator",
+    "The Prestige",
+    "Memento"
+];
+
+let movies = localStorage.getItem("movies");
+if(!movies){
+    movies = defaultMovies;
+    localStorage.setItem("movies", JSON.stringify(movies));
+}else{
+    console.log(typeof movies);
+    movies = JSON.parse(movies);
+}
+
+function renderMovieCards(){
+    movieList.innerHTML = "";
+    movies.forEach(function(movie){
+        const card = document.createElement("div");
+        card.classList.add("movie-card");
+        card.innerHTML = `<span class="movie-title">${movie}</span>
+        <button class="delete-btn">X</button>`;
+        movieList.appendChild(card);
+    });
+};
+renderMovieCards();
+
+
 
 searchInput.addEventListener("keyup", function (e) {
     const searchTerm = searchInput.value.toLowerCase();
@@ -198,7 +235,29 @@ function revealOnScroll() {
     movieList.appendChild(newCard);
   })
 
+//   localstorage POC
+
+//   localStorage.setItem("name", "Skand");
+//   localStorage.setItem("device", "Iphone");
+//   localStorage.setItem("color-theme", "dark");
+
+//   const name1 = localStorage.getItem("name");
+//   console.log(name1);
+
+//   localStorage.removeItem("device");
+
+// //   localStorage.clear();
+// const obj ={"title": "Pushpa", "movieRating": "5"}
+//   localStorage.setItem("movie", JSON.stringify(obj));
+//   const movieObj = JSON.parse(localStorage.getItem("movie"));
+//   console.log(movieObj);
+//   console.log(typeof movieObj);
+//   console.log(movieObj.title);
+  
+//adding local storage to our app
   
 
 
-  
+
+
+
