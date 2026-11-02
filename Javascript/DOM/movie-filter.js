@@ -71,3 +71,26 @@ window.addEventListener("scroll", revealMovieCardsOnScroll);
 // Doing heavy DOM manipulation inside scroll handlers without throttling. This can cause jank and stuttering.
 // Confusing window.scrollY (page scroll position) with getBoundingClientRect (element position relative to viewport). They measure different things.
 // Forgetting to call the reveal function once on page load. Cards already in the viewport would remain hidden until the user scrolls.
+
+//remove element from DOM
+
+// const card =document.querySelector(".movie-card");
+// card.remove();
+
+// parent.removeChild();
+// const card = document.querySelector(".movie-card");
+// const movieList =document.getElementById("movieList");
+// movieList.removeChild(card);
+
+
+const deleteBtns = document.querySelectorAll(".delete-btn");
+deleteBtns.forEach(function(btn){
+    btn.addEventListener("click", function(){
+        const card = btn.parentElement;
+        card.remove();
+    })
+})
+
+//Trying to remove an element that has already been removed. This throws an error.
+// Forgetting that remove() is permanent for that session. The element is gone from the DOM tree. If you need it back, you have to recreate it.
+// Confusing hiding (display: none) with removing. Hiding keeps the element in the DOM. Removing deletes it entirely. Choose based on whether you need it again.
