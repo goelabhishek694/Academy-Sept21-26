@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <section id="section">
+        <div id="div">
+            <button id="button">Click me</button>
+        </div>
+    </section>
+</body>
+<script>
+    const button = document.getElementById("button");
+    const div = document.getElementById("div");
+    const section = document.getElementById("section");
+    const body = document.body;
+    
+    document.addEventListener("click", function(e){
+        console.log("Document clicked");
+    }, true);
+
+    body.addEventListener("click", function(e){
+        console.log("Body clicked");
+    }, true);
+
+    section.addEventListener("click", function(e){
+        console.log("Section clicked");
+    }, true);
+
+    div.addEventListener("click", function(e){
+        console.log("Div clicked");
+    }, true);
+
+    button.addEventListener("click", function(e){
+        console.log("Button clicked");
+    }, true);
+</script>
+
+</html>
