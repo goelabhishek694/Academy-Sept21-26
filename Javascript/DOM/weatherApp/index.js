@@ -81,3 +81,8 @@ const aiButton = document.getElementById("aiButton");
 //groq api key 
 //free , get it from console.groq.com
 const GROQ_API_KEY = "";
+
+//fetchAdvice(temp, cuty, condition , locatime){ //make api call to groq, get response , print the advice on screen using dom }
+
+
+// this is my hw , help me out and not give the soluton , give me hints 
