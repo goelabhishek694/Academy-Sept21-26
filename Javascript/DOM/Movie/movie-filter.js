@@ -219,7 +219,17 @@ function revealOnScroll() {
     const deleteBtn = e.target.closest(".delete-btn");
     if(deleteBtn){
         const card = deleteBtn.closest(".movie-card");
+
+        //deletes the movie from DOM tree, 
         card.remove();
+        const movieToBeDeleted = card.children[0].textContent;
+        console.log(movieToBeDeleted);
+        
+        // i want to delte the movie from LS as well. 
+        movies = movies.filter(function(movieName){
+            return movieName !== movieToBeDeleted
+        })
+        localStorage.setItem("movies", JSON.stringify(movies));
     }
   });
 
@@ -233,6 +243,11 @@ function revealOnScroll() {
     newCard.innerHTML = `<span class="movie-title">${movieName}</span>
         <button class="delete-btn">X</button>`;
     movieList.appendChild(newCard);
+
+    //add movie to LS
+    movies.push(movieName);
+    localStorage.setItem("movies", JSON.stringify(movies));
+
   })
 
 //   localstorage POC

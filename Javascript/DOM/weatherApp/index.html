@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+ <head>
+   <meta charset="UTF-8" />
+   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+   <title>Weather App</title>
+   <link rel="stylesheet" href="index.css" />
+ </head>
+ <body>
+   <main class="weather-app">
+     <section class="weather-card">
+       <p class="app-title">Current Weather</p>
+       <div class="weather">
+         <div class="temperature">
+           <span class="temp">20</span>
+           <span class="degree">&deg;C</span>
+         </div>
+         <div class="time-location">
+           <p class="city">City Name</p>
+           <span class="localtime">Local Time</span>
+         </div>
+         <div class="weather-condition">
+           <img class="weather-icon" src="" alt="Weather condition icon" />
+           <span class="condition">Condition</span>
+         </div>
+       </div>
+     </section>
+     <section class="search-section">
+       <form id="searchForm" class="search-form">
+         <label for="searchInput">Search for a city</label>
+         <div class="search-controls">
+           <input
+             type="text"
+             class="search-field"
+             placeholder="Enter city name"
+             id="searchInput"
+             required
+           />
+           <button type="submit">Search</button>
+         </div>
+       </form>
+     </section>
+   </main>
+   <script src="index.js"></script>
+ </body>
+</html>
