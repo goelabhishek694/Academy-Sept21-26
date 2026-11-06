@@ -1,0 +1,95 @@
+/* === RESET === */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body {
+    background-color: #2d2d2d;
+    color: white;
+    font-family: Arial, sans-serif;
+    min-height: 100vh;
+}
+/* === TOOLBOX === */
+.toolbox {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: #3d3d3d;
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    z-index: 10;
+}
+/* === COLOR BOXES === */
+.color-box {
+    width: 40px;
+    height: 40px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+.color-pink {
+    background-color: #ff6b6b;
+}
+.color-blue {
+    background-color: #6bcbff;
+}
+.color-green {
+    background-color: #6bff9e;
+}
+.color-orange {
+    background-color: #ffb86b;
+}
+/* === ADD BUTTON === */
+.add-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background-color: white;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+}
+/* === MODAL === */
+.modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #3d3d3d;
+    padding: 20px;
+    border-radius: 10px;
+    z-index: 20;
+}
+.modal-input {
+    width: 300px;
+    height: 100px;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    resize: none;
+    outline: none;
+}
+.hidden {
+    display: none;
+}
+/* === TICKET CONTAINER === */
+.ticket-container {
+    margin-top: 80px;
+    padding: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: flex-start;
+}
+
+.color-box:hover {
+    opacity: 0.8;
+}
+.add-btn:hover {
+    background-color: #e0e0e0;
+}

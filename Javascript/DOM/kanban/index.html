@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
+        integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script
+      src="https://unpkg.com/shortid-dist@1.0.5/dist/shortid-2.2.13.min.js"
+      referrerpolicy="no-referrer"
+    ></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- Tool Box -->
+    <div class="toolbox-cont">
+        <!-- Color Boxes -->
+        <div class="toolbox-priority-cont">
+            <button class="color all">All</button>
+            <div class="color pink"></div>
+            <div class="color lightblue"></div>
+            <div class="color purple"></div>
+            <div class="color green"></div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-btn-cont">
+            <button id="add-btn"><i class="fa-solid fa-plus"></i></button>
+            <div class="divider"></div>
+            <button id="remove-btn"><i class="fa-solid fa-trash"></i></button>
+        </div>
+    </div>
+
+    <!-- Main Section -->
+    <div class="main-cont">
+    </div>
+
+    <!-- Task Container Modal -->
+    <div class="modal-cont">
+        <div class="task-container">
+            <textarea name="task" class="textArea-cont" cols="30" rows="10"></textarea>
+            <div class="task-btn-cont">
+                <button id="close-btn">Close</button>
+                <button id="submit-btn">Submit</button>
+            </div>
+        </div>
+        <div class="priority-task-cont">
+            <div class="priority-color pink"></div>
+            <div class="priority-color lightblue"></div>
+            <div class="priority-color purple"></div>
+            <div class="priority-color green"></div>
+        </div>
+    </div>
+
+    <script src="./script.js"></script>
+</body>
+
+</html>

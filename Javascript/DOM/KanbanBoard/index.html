@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Kanban Board</title>
+   <link rel="stylesheet" href="[https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css](https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css)">
+   <link rel="stylesheet" href="style.css">
+</head>
+<body>
+   <div class="toolbox">
+       <div class="color-box color-pink" data-color="#ff6b6b" title="High priority"></div>
+       <div class="color-box color-blue" data-color="#6bcbff" title="Medium priority"></div>
+       <div class="color-box color-green" data-color="#6bff9e" title="Low priority"></div>
+       <div class="color-box color-orange" data-color="#ffb86b" title="Critical priority"></div>
+       <button class="add-btn">+</button>
+       <button class="show-all-btn">Show All</button>
+   </div>
+   <div class="ticket-container"></div>
+   <div class="modal hidden">
+       <textarea class="modal-input" placeholder="Enter your task..."></textarea>
+   </div>
+   <script src="script.js"></script>
+</body>
+</html>
