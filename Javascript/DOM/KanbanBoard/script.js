@@ -5,7 +5,9 @@ const modal = document.querySelector(".modal");
 const modalInput = document.querySelector(".modal-input");
 const ticketContainer = document.querySelector(".ticket-container");
 const toolbox = document.querySelector(".toolbox");
+let activeColorBox = document.querySelector(".color-red");
 
+activeColorBox.classList.add("active");
 // STATE 
 let selectedColor = "#ff6b6b";
 
@@ -26,8 +28,9 @@ ticketContainer.addEventListener("click", function(e){
 });
 
 toolbox.addEventListener("click", function (e) {
-    console.log(e.target);
-    if (e.target.classList[0] == "add-btn") {
+    // console.log(e.target);
+    let ele = e.target;
+    if (ele.classList[0] == "add-btn") {
         if (isModalOpen) {
             modal.classList.add("hidden");
             addBtn.textContent = "+"
@@ -37,8 +40,17 @@ toolbox.addEventListener("click", function (e) {
             modalInput.value = "";
         }
         isModalOpen = !isModalOpen;
-    }else{
-        //ticket filtering on the base of priorty colors
+    }else if (ele.classList[0] == "color-box"){
+        //ticket color selection
+        //remove active class
+        activeColorBox.classList.remove("active");
+
+        ele.classList.add("active");
+        selectedColor = ele.dataset.color;
+        activeColorBox = ele;
+
+        // console.log(selectedColor);
+        // console.log(ele.dataset.title);
     }
 })
 
@@ -64,4 +76,6 @@ function createTicket(color, task){
     console.log(`ticket created with color ${color} and task ${task}`);
     
 }
+
+
 

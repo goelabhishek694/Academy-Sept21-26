@@ -29,8 +29,10 @@ body {
     height: 40px;
     border-radius: 5px;
     cursor: pointer;
+    border: 3px solid transparent;
+    transition: border 0.2s ease;
 }
-.color-pink {
+.color-red {
     background-color: #ff6b6b;
 }
 .color-blue {
@@ -93,4 +95,8 @@ body {
 }
 .add-btn:hover {
     background-color: #e0e0e0;
+}
+
+.active{
+    border: 5px solid white;
 }
