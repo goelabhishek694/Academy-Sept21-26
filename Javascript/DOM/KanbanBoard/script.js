@@ -19,15 +19,31 @@ let isModalOpen = false;
 
 
 ticketContainer.addEventListener("click", function(e){
-    console.log("hello");
-    
+    console.log("hello", e.target);
+    const ele = e.target;
+    const removeBtn = ele.closest(".ticket-remove");
+
     if(isModalOpen){
         console.log("world");
         
         modal.classList.add("hidden");
-        addBtn.textContent = "+"
+        addBtn.textContent = "+";
+        isModalOpen = !isModalOpen;
     }
-    isModalOpen = !isModalOpen;
+    else if(removeBtn){
+        //remove the ticket
+        const ticket = removeBtn.closest(".ticket");
+        const ticketId = ticket.getAttribute("data-id");
+
+        //remove data from array 
+        ticketsArr = ticketsArr.filter(function(ticket){
+            return ticket.id!=ticketId;
+        });
+
+        //remove from DOM
+        ticket.remove();
+        
+    }
 });
 
 toolbox.addEventListener("click", function (e) {
@@ -57,7 +73,7 @@ toolbox.addEventListener("click", function (e) {
     }
 })
 
-modalInput.addEventListener("keydown", function(e){
+modalInput.addEventListener("keyup", function(e){
     // console.log(e.key);
     
     if(e.key == "Enter"){
@@ -66,6 +82,7 @@ modalInput.addEventListener("keydown", function(e){
             alert("pls enter a task description");
             return;
         }
+        isModalOpen = false;
         const ticketId = createTicket(selectedColor, taskText);
         //store ticket data in array
         ticketsArr.push({
@@ -77,7 +94,7 @@ modalInput.addEventListener("keydown", function(e){
 
         modalInput.value = "";
         modal.classList.add("hidden");
-            addBtn.textContent = "+"
+        addBtn.textContent = "+"
 
     }
 });
@@ -106,14 +123,20 @@ function createTicket(color, task){
     lock.classList.add("ticket-lock");
     lock.innerHTML = `<i class="fa-solid fa-lock"></i>`;
 
-    // 5. assemble the ticket
+    // 5. remove btn
+    const removeBtn = document.createElement("div");
+    removeBtn.classList.add("ticket-remove");
+    removeBtn.innerHTML = `<i class="fa-solid fa-xmark"></i>`;
+
+    // 6. assemble the ticket
     ticket.appendChild(colorBand);
     ticket.appendChild(text);
     ticket.appendChild(lock);
+    ticket.appendChild(removeBtn);
 
-    // 6. add to the page
+    // 7. add to the page
     ticketContainer.appendChild(ticket);
-    
+
     return id;
     
 }
@@ -122,6 +145,8 @@ function generateId(){
     ++ticketCounter;
     return 'ticket-'+ ticketCounter;
 }
+
+ticketContainer.addEventListener("click")
 
 
 

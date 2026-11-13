@@ -118,6 +118,7 @@ body {
     padding: 10px;
     font-size: 14px;
     word-wrap: break-word;
+    overflow-y: auto;
     color: white;
 }
 .ticket-lock {
@@ -128,4 +129,18 @@ body {
     cursor: pointer;
     color: white;
     font-size: 14px;
+}
+
+.ticket-remove{
+    width: 25px;
+    display:flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #888;
+    font-size: 12px;
+}
+
+.ticket-remove:hover{
+    color: #ff4444;
 }
