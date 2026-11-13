@@ -3,17 +3,20 @@
 const addBtn = document.querySelector(".add-btn");
 const modal = document.querySelector(".modal");
 const modalInput = document.querySelector(".modal-input");
-const ticketContainer = document.querySelector(".ticket-container");
+let ticketContainer = document.querySelector(".ticket-container");
 const toolbox = document.querySelector(".toolbox");
 let activeColorBox = document.querySelector(".color-red");
 
 activeColorBox.classList.add("active");
 // STATE 
 let selectedColor = "#ff6b6b";
+let ticketCounter =0;
+let ticketsArr = [];
 
 // MODAL TOGGLE
-
 let isModalOpen = false;
+
+
 
 ticketContainer.addEventListener("click", function(e){
     console.log("hello");
@@ -73,8 +76,17 @@ modalInput.addEventListener("keydown", function(e){
 });
 
 function createTicket(color, task){
-    console.log(`ticket created with color ${color} and task ${task}`);
+    // console.log(`ticket created with color ${color} and task ${task}`);
+
+    //const id = generateId();
+    const ticket = document.createElement("div");
+    container
     
+}
+
+function generateId(){
+    ++ticketCounter;
+    return 'ticket-'+ ticketCounter;
 }
 
 

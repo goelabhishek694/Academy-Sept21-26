@@ -100,3 +100,32 @@ body {
 .active{
     border: 5px solid white;
 }
+
+.ticket {
+    width: 250px;
+    min-height: 100px;
+    background-color: #3d3d3d;
+    border-radius: 5px;
+    display: flex;
+    overflow: hidden;
+}
+.ticket-color-band {
+    width: 8px;
+    flex-shrink: 0;
+}
+.ticket-text {
+    flex-grow: 1;
+    padding: 10px;
+    font-size: 14px;
+    word-wrap: break-word;
+    color: white;
+}
+.ticket-lock {
+    width: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: white;
+    font-size: 14px;
+}
