@@ -66,7 +66,14 @@ modalInput.addEventListener("keydown", function(e){
             alert("pls enter a task description");
             return;
         }
-        createTicket(selectedColor, taskText);
+        const ticketId = createTicket(selectedColor, taskText);
+        //store ticket data in array
+        ticketsArr.push({
+            id: ticketId,
+            text: taskText,
+            color:selectedColor,
+            isLocked : true
+        })
 
         modalInput.value = "";
         modal.classList.add("hidden");
@@ -77,10 +84,37 @@ modalInput.addEventListener("keydown", function(e){
 
 function createTicket(color, task){
     // console.log(`ticket created with color ${color} and task ${task}`);
+    const id = generateId();
 
-    //const id = generateId();
+    // 1. create ticket container
     const ticket = document.createElement("div");
-    container
+    ticket.classList.add("ticket");
+    ticket.setAttribute("data-id", id);
+
+    // 2. create the color band 
+    const colorBand = document.createElement("div");
+    colorBand.classList.add("ticket-color-band");
+    colorBand.style.backgroundColor =  color;
+
+    // 3. Create ticket text area
+    const text = document.createElement("div");
+    text.classList.add("ticket-text");
+    text.textContent = task;
+
+    // 4. create the lock icon
+    const lock = document.createElement("div");
+    lock.classList.add("ticket-lock");
+    lock.innerHTML = `<i class="fa-solid fa-lock"></i>`;
+
+    // 5. assemble the ticket
+    ticket.appendChild(colorBand);
+    ticket.appendChild(text);
+    ticket.appendChild(lock);
+
+    // 6. add to the page
+    ticketContainer.appendChild(ticket);
+    
+    return id;
     
 }
 
