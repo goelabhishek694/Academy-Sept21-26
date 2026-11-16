@@ -22,6 +22,7 @@ ticketContainer.addEventListener("click", function(e){
     console.log("hello", e.target);
     const ele = e.target;
     const removeBtn = ele.closest(".ticket-remove");
+    const lockBtn = ele.closest(".ticket-lock");
 
     if(isModalOpen){
         console.log("world");
@@ -43,6 +44,35 @@ ticketContainer.addEventListener("click", function(e){
         //remove from DOM
         ticket.remove();
         
+    }else if(lockBtn){
+        const ticket = lockBtn.closest(".ticket");
+        const ticketId = ticket.getAttribute("data-id");
+        const textEle = ticket.querySelector(".ticket-text");
+        const icon = lockBtn.querySelector("i");
+
+        //find the ticket data 
+        var ticketData = ticketsArr.find(function(ticket){
+            return ticket.id == ticketId
+        });
+
+        if(!ticketData) return;
+
+        //toggle the locked state
+        if(ticketData.isLocked){
+            textEle.setAttribute("contenteditable", "true");
+            icon.classList.remove("fa-lock");
+            icon.classList.add("fa-unlock");
+        }else{
+            textEle.setAttribute("contenteditable", "false");
+            icon.classList.remove("fa-unlock");
+            icon.classList.add("fa-lock");
+        }
+
+        ticketData.isLocked = !ticketData.isLocked;
+
+
+
+
     }
 });
 
@@ -147,6 +177,28 @@ function generateId(){
 }
 
 ticketContainer.addEventListener("click")
+
+
+ticketContainer.addEventListener("blur", function(e){
+    //handle the edited ticket text
+    var editedEle = e.target;
+    if(!editedEle.classList.contains("ticket-text")) return;
+    var ticket = editedEle.closest(".ticket");
+    var ticketId = ticket.getAttribute("data-id");
+    var newText = editedEle.textContent.trim();
+
+    //update the data array
+    var ticketData = ticketsArr.find(function(ticket){
+        return ticket.id == ticketId
+    });
+
+    if(ticketData){
+        ticketData.text= newText;
+    }
+}, true);
+
+
+
 
 
 

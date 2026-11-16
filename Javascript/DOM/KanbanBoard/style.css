@@ -120,6 +120,7 @@ body {
     word-wrap: break-word;
     overflow-y: auto;
     color: white;
+    outline: none;
 }
 .ticket-lock {
     width: 30px;
