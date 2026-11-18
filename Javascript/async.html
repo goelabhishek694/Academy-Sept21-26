@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Freeze Demo</title>
+</head>
+<body>
+  <button id="btn">Click Me</button>
+  <p id="output">Waiting...</p>
+  <script>
+    document.getElementById("btn").addEventListener("click", function () {
+      document.getElementById("output").textContent = "Button clicked!";
+    });
+    // Simulate heavy work
+    let total = 0;
+    for (let i = 0; i < 3000000000; i++) {
+      total += i;
+    }
+    console.log("Heavy work done. Total:", total);
+  </script>
+</body>
+</html>
