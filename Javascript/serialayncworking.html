@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Node.js Async File Reading Animation</title>
+    <style>
+        :root {
+            --bg: #07111f;
+            --panel: #0e1b2c;
+            --panel-2: #13243a;
+            --border: #27405f;
+            --text: #eef5ff;
+            --muted: #9fb3cc;
+            --stack: #b78cff;
+            --api: #7bd957;
+            --queue: #ffbf47;
+            --loop: #4da3ff;
+            --console: #6ef2a5;
+            --danger: #ff6b6b;
+            --shadow: 0 14px 36px rgba(0, 0, 0, .28);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(77, 163, 255, .10), transparent 32%),
+                radial-gradient(circle at bottom right, rgba(183, 140, 255, .08), transparent 30%),
+                var(--bg);
+            color: var(--text);
+        }
+
+        .app {
+            width: min(1440px, 96vw);
+            margin: 0 auto;
+            padding: 26px 0 38px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(28px, 4vw, 50px);
+            line-height: 1.05;
+            letter-spacing: -.03em;
+        }
+
+        .subtitle {
+            margin: 10px 0 22px;
+            color: var(--muted);
+            font-size: 16px;
+        }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        button {
+            appearance: none;
+            border: 1px solid var(--border);
+            background: var(--panel-2);
+            color: var(--text);
+            border-radius: 12px;
+            padding: 10px 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform .18s ease, border-color .18s ease, background .18s ease;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            border-color: #4d6f99;
+        }
+
+        button.primary {
+            background: linear-gradient(135deg, #2468d8, #4da3ff);
+            border-color: transparent;
+        }
+
+        .speed-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: auto;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        input[type="range"] {
+            width: 150px;
+        }
+
+        .stage {
+            display: grid;
+            grid-template-columns: 1.5fr .8fr;
+            gap: 16px;
+        }
+
+        .main {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+            min-height: 620px;
+        }
+
+        .lane,
+        .side-panel,
+        .explanation {
+            background: linear-gradient(180deg, rgba(19, 36, 58, .92), rgba(12, 25, 42, .96));
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .lane {
+            padding: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .lane h2 {
+            margin: 0 0 6px;
+            font-size: 18px;
+        }
+
+        .lane small {
+            color: var(--muted);
+        }
+
+        .lane.stack h2 {
+            color: var(--stack);
+        }
+
+        .lane.api h2 {
+            color: var(--api);
+        }
+
+        .lane.queue h2 {
+            color: var(--queue);
+        }
+
+        .lane.loop h2 {
+            color: var(--loop);
+        }
+
+        .slot-area {
+            margin-top: 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-height: 470px;
+            justify-content: flex-end;
+        }
+
+        .card {
+            border: 1px solid currentColor;
+            border-radius: 14px;
+            padding: 13px;
+            min-height: 72px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: "SFMono-Regular", Consolas, monospace;
+            font-size: 14px;
+            background: rgba(255, 255, 255, .035);
+            opacity: 0;
+            transform: translateY(14px) scale(.98);
+            transition: opacity .35s ease, transform .35s ease, filter .35s ease;
+        }
+
+        .card.show {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        .card.active {
+            filter: drop-shadow(0 0 12px currentColor);
+            animation: pulse 1.1s ease-in-out infinite;
+        }
+
+        .stack .card {
+            color: var(--stack);
+        }
+
+        .api .card {
+            color: var(--api);
+        }
+
+        .queue .card {
+            color: var(--queue);
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: translateY(0) scale(1);
+            }
+
+            50% {
+                transform: translateY(-2px) scale(1.02);
+            }
+        }
+
+        .loop-visual {
+            height: 470px;
+            display: grid;
+            place-items: center;
+        }
+
+        .ring {
+            width: 150px;
+            aspect-ratio: 1;
+            border: 7px solid rgba(77, 163, 255, .18);
+            border-top-color: var(--loop);
+            border-right-color: var(--loop);
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            text-align: center;
+            color: var(--loop);
+            font-weight: 800;
+            transition: filter .3s ease;
+        }
+
+        .ring.spin {
+            animation: spin 1.05s linear infinite;
+            filter: drop-shadow(0 0 16px rgba(77, 163, 255, .7));
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .ring span {
+            transform: rotate(0deg);
+            font-size: 15px;
+        }
+
+        .right {
+            display: grid;
+            gap: 16px;
+            align-content: start;
+        }
+
+        .side-panel,
+        .explanation {
+            padding: 18px;
+        }
+
+        .side-panel h2,
+        .explanation h2 {
+            margin: 0 0 14px;
+            font-size: 18px;
+        }
+
+        .console {
+            min-height: 250px;
+            background: #050a10;
+            border: 1px solid #203047;
+            border-radius: 14px;
+            padding: 14px;
+            font-family: "SFMono-Regular", Consolas, monospace;
+            color: var(--console);
+            line-height: 1.8;
+            overflow: hidden;
+        }
+
+        .console-line {
+            opacity: 0;
+            transform: translateX(-8px);
+            transition: opacity .3s ease, transform .3s ease;
+        }
+
+        .console-line.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .explanation {
+            min-height: 260px;
+        }
+
+        .step-number {
+            display: inline-grid;
+            place-items: center;
+            width: 34px;
+            aspect-ratio: 1;
+            border-radius: 50%;
+            background: rgba(77, 163, 255, .16);
+            color: #9cc9ff;
+            font-weight: 900;
+            margin-bottom: 12px;
+        }
+
+        .step-title {
+            font-size: 22px;
+            margin: 0 0 8px;
+        }
+
+        .step-text {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.65;
+            font-size: 16px;
+        }
+
+        .progress {
+            height: 8px;
+            background: rgba(255, 255, 255, .08);
+            border-radius: 99px;
+            overflow: hidden;
+            margin-top: 16px;
+        }
+
+        .progress>div {
+            height: 100%;
+            width: 0;
+            background: linear-gradient(90deg, #4da3ff, #b78cff);
+            transition: width .35s ease;
+        }
+
+        .flow-summary {
+            margin-top: 16px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            background: rgba(14, 27, 44, .8);
+            color: var(--muted);
+            text-align: center;
+            font-weight: 700;
+        }
+
+        .flow-summary strong {
+            color: var(--text);
+        }
+
+        @media (max-width: 1050px) {
+            .stage {
+                grid-template-columns: 1fr;
+            }
+
+            .main {
+                min-height: auto;
+            }
+
+            .speed-wrap {
+                margin-left: 0;
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 760px) {
+            .main {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .slot-area,
+            .loop-visual {
+                min-height: 320px;
+                height: auto;
+            }
+        }
+
+        @media (max-width: 520px) {
+            .main {
+                grid-template-columns: 1fr;
+            }
+
+            .slot-area,
+            .loop-visual {
+                min-height: 220px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app">
+        <h1>Nested <code>fs.readFile()</code> Execution</h1>
+        <p class="subtitle">A conceptual animation of the Call Stack, Node APIs, Callback Queue, Event Loop, and console
+            output.</p>
+
+        <div class="toolbar">
+            <button class="primary" id="playBtn">▶ Play</button>
+            <button id="pauseBtn">⏸ Pause</button>
+            <button id="nextBtn">Next step</button>
+            <button id="resetBtn">↺ Reset</button>
+
+            <div class="speed-wrap">
+                <label for="speed">Speed</label>
+                <input id="speed" type="range" min="500" max="2600" step="100" value="1500" />
+            </div>
+        </div>
+
+        <div class="stage">
+            <div class="main">
+                <section class="lane stack">
+                    <h2>Call Stack</h2>
+                    <small>JavaScript executes here</small>
+                    <div class="slot-area" id="stackArea"></div>
+                </section>
+
+                <section class="lane api">
+                    <h2>Node APIs</h2>
+                    <small>File system work happens here</small>
+                    <div class="slot-area" id="apiArea"></div>
+                </section>
+
+                <section class="lane queue">
+                    <h2>Callback Queue</h2>
+                    <small>Completed callbacks wait here</small>
+                    <div class="slot-area" id="queueArea"></div>
+                </section>
+
+                <section class="lane loop">
+                    <h2>Event Loop</h2>
+                    <small>Moves ready callbacks to the stack</small>
+                    <div class="loop-visual">
+                        <div class="ring" id="eventLoop"><span>EVENT<br>LOOP</span></div>
+                    </div>
+                </section>
+            </div>
+
+            <aside class="right">
+                <section class="explanation">
+                    <div class="step-number" id="stepNumber">0</div>
+                    <h2 class="step-title" id="stepTitle">Ready</h2>
+                    <p class="step-text" id="stepText">Press Play or Next step to begin.</p>
+                    <div class="progress">
+                        <div id="progressBar"></div>
+                    </div>
+                </section>
+
+                <section class="side-panel">
+                    <h2>Console output</h2>
+                    <div class="console" id="consoleBox"></div>
+                </section>
+            </aside>
+        </div>
+
+        <div class="flow-summary">
+            <strong>Sequence:</strong>
+            read File 1 → run Callback 1 → read File 2 → run Callback 2 → read File 3 → run Callback 3
+        </div>
+    </div>
+
+    <script>
+        const stackArea = document.getElementById("stackArea");
+        const apiArea = document.getElementById("apiArea");
+        const queueArea = document.getElementById("queueArea");
+        const eventLoop = document.getElementById("eventLoop");
+        const consoleBox = document.getElementById("consoleBox");
+
+        const stepNumber = document.getElementById("stepNumber");
+        const stepTitle = document.getElementById("stepTitle");
+        const stepText = document.getElementById("stepText");
+        const progressBar = document.getElementById("progressBar");
+
+        const playBtn = document.getElementById("playBtn");
+        const pauseBtn = document.getElementById("pauseBtn");
+        const nextBtn = document.getElementById("nextBtn");
+        const resetBtn = document.getElementById("resetBtn");
+        const speedInput = document.getElementById("speed");
+
+        let currentStep = -1;
+        let timer = null;
+        let playing = false;
+
+        const state = {
+            stack: [],
+            api: [],
+            queue: [],
+            loop: false,
+            output: []
+        };
+
+        const steps = [
+            {
+                title: "Start reading File 1",
+                text: 'fs.readFile("f1.txt", ...) enters the Call Stack. Node.js hands the file operation to its file-system APIs.',
+                action() {
+                    state.stack = ['fs.readFile("f1.txt", callback1)'];
+                    state.api = ['Reading f1.txt'];
+                }
+            },
+            {
+                title: "Call Stack becomes empty",
+                text: "There is no synchronous code after the first readFile call, so JavaScript has nothing else to execute.",
+                action() {
+                    state.stack = [];
+                }
+            },
+            {
+                title: "File 1 finishes",
+                text: "Node.js completes the file read. Callback 1 is placed in the Callback Queue.",
+                action() {
+                    state.api = [];
+                    state.queue = ["callback1"];
+                }
+            },
+            {
+                title: "Callback 1 moves to the stack",
+                text: "The Event Loop sees that the Call Stack is empty and moves Callback 1 onto it.",
+                action() {
+                    state.loop = true;
+                    state.queue = [];
+                    state.stack = ["callback1 executing"];
+                }
+            },
+            {
+                title: "Callback 1 runs",
+                text: '"File 1" is printed. Then the read for File 2 starts and is handed to Node APIs.',
+                action() {
+                    state.loop = false;
+                    state.output.push("File 1: <data1>");
+                    state.stack = ['callback1', 'fs.readFile("f2.txt", callback2)'];
+                    state.api = ["Reading f2.txt"];
+                }
+            },
+            {
+                title: "Callback 1 finishes",
+                text: "Callback 1 is done. The Call Stack becomes empty while File 2 continues reading.",
+                action() {
+                    state.stack = [];
+                }
+            },
+            {
+                title: "File 2 finishes",
+                text: "Callback 2 is placed in the Callback Queue.",
+                action() {
+                    state.api = [];
+                    state.queue = ["callback2"];
+                }
+            },
+            {
+                title: "Callback 2 moves to the stack",
+                text: "The Event Loop moves Callback 2 onto the empty Call Stack.",
+                action() {
+                    state.loop = true;
+                    state.queue = [];
+                    state.stack = ["callback2 executing"];
+                }
+            },
+            {
+                title: "Callback 2 runs",
+                text: '"File 2" is printed. Then the read for File 3 starts.',
+                action() {
+                    state.loop = false;
+                    state.output.push("File 2: <data2>");
+                    state.stack = ['callback2', 'fs.readFile("f3.txt", callback3)'];
+                    state.api = ["Reading f3.txt"];
+                }
+            },
+            {
+                title: "Callback 2 finishes",
+                text: "The Call Stack becomes empty while File 3 is being read.",
+                action() {
+                    state.stack = [];
+                }
+            },
+            {
+                title: "File 3 finishes",
+                text: "Callback 3 is placed in the Callback Queue.",
+                action() {
+                    state.api = [];
+                    state.queue = ["callback3"];
+                }
+            },
+            {
+                title: "Callback 3 moves to the stack",
+                text: "The Event Loop moves Callback 3 onto the empty Call Stack.",
+                action() {
+                    state.loop = true;
+                    state.queue = [];
+                    state.stack = ["callback3 executing"];
+                }
+            },
+            {
+                title: "Callback 3 runs",
+                text: '"File 3" and "All files read in order" are printed. Execution is complete.',
+                action() {
+                    state.loop = false;
+                    state.output.push("File 3: <data3>");
+                    state.output.push("All files read in order");
+                    state.stack = ["callback3 executing"];
+                }
+            },
+            {
+                title: "Done",
+                text: "Each file started only inside the previous file's callback, so the output order is guaranteed.",
+                action() {
+                    state.stack = [];
+                }
+            }
+        ];
+
+        function createCard(text, active = false) {
+            const el = document.createElement("div");
+            el.className = "card show" + (active ? " active" : "");
+            el.textContent = text;
+            return el;
+        }
+
+        function renderArea(area, items, active = false) {
+            area.innerHTML = "";
+            items.forEach((item, index) => {
+                area.appendChild(createCard(item, active && index === items.length - 1));
+            });
+        }
+
+        function render() {
+            renderArea(stackArea, state.stack, state.stack.length > 0);
+            renderArea(apiArea, state.api, state.api.length > 0);
+            renderArea(queueArea, state.queue, state.queue.length > 0);
+
+            eventLoop.classList.toggle("spin", state.loop);
+
+            consoleBox.innerHTML = "";
+            state.output.forEach(line => {
+                const el = document.createElement("div");
+                el.className = "console-line show";
+                el.textContent = "> " + line;
+                consoleBox.appendChild(el);
+            });
+        }
+
+        function showStep(index) {
+            if (index < 0 || index >= steps.length) return;
+
+            currentStep = index;
+            const step = steps[index];
+            step.action();
+            render();
+
+            stepNumber.textContent = index + 1;
+            stepTitle.textContent = step.title;
+            stepText.textContent = step.text;
+            progressBar.style.width = `${((index + 1) / steps.length) * 100}%`;
+
+            if (index === steps.length - 1) pause();
+        }
+
+        function nextStep() {
+            if (currentStep < steps.length - 1) {
+                showStep(currentStep + 1);
+            }
+        }
+
+        function play() {
+            if (playing) return;
+            playing = true;
+            playBtn.textContent = "▶ Playing";
+
+            if (currentStep >= steps.length - 1) reset();
+
+            const tick = () => {
+                if (!playing) return;
+                nextStep();
+
+                if (currentStep < steps.length - 1) {
+                    timer = setTimeout(tick, Number(speedInput.value));
+                }
+            };
+
+            tick();
+        }
+
+        function pause() {
+            playing = false;
+            playBtn.textContent = "▶ Play";
+            clearTimeout(timer);
+            timer = null;
+        }
+
+        function reset() {
+            pause();
+            currentStep = -1;
+            state.stack = [];
+            state.api = [];
+            state.queue = [];
+            state.loop = false;
+            state.output = [];
+            render();
+
+            stepNumber.textContent = "0";
+            stepTitle.textContent = "Ready";
+            stepText.textContent = "Press Play or Next step to begin.";
+            progressBar.style.width = "0%";
+        }
+
+        playBtn.addEventListener("click", play);
+        pauseBtn.addEventListener("click", pause);
+        nextBtn.addEventListener("click", () => {
+            pause();
+            nextStep();
+        });
+        resetBtn.addEventListener("click", reset);
+
+        speedInput.addEventListener("input", () => {
+            if (playing) {
+                pause();
+                play();
+            }
+        });
+
+        reset();
+    </script>
+</body>
+
+</html>
