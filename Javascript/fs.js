@@ -43,17 +43,29 @@ console.log("All reads started");
 
 //serial async operation
 
-// const fs = require("fs");
-// fs.readFile("f1.txt", "utf-8", function (error, data1) {
-//   console.log("File 1:", data1);
-//   fs.readFile("f2.txt", "utf-8", function (error, data2) {
-//     console.log("File 2:", data2);
-//     fs.readFile("f3.txt", "utf-8", function (error, data3) {
-//       console.log("File 3:", data3);
-//       console.log("All files read in order");
-//     });
-//   });
-// });
+const fs = require("fs");
+fs.readFile("f1.txt", "utf-8", function (error, data1) {
+  if(error){
+    console.log(error);
+    return
+  }
+  console.log("File 1:", data1);
+  fs.readFile("f2.txt", "utf-8", function (error, data2) {
+    if(error){
+      console.log(error);
+      return
+    }
+    console.log("File 2:", data2);
+    fs.readFile("f3.txt", "utf-8", function (error, data3) {
+      if(error){
+        console.log(error);
+        return
+      }
+      console.log("File 3:", data3);
+      console.log("All files read in order");
+    });
+  });
+});
 
 
 fs.readFile("f1.txt", "utf-8", function (error, data1) {

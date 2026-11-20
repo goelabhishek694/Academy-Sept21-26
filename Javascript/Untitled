@@ -1,0 +1,27 @@
+const fs = require("fs");
+fs.readFile("f1.txt", "utf-8", (err, data1) => {
+  if (err) {
+    console.log(err);
+  } else {
+    console.log(data1);
+    fs.readFile("f2.txt", "utf-8", (err, data2) => {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log(data2);
+        fs.readFile("f3.txt", "utf-8", (err, data3) => {
+          if (err) {
+            console.log(err);
+          } else {
+            console.log(data3);
+          }
+        });
+      }
+    });
+  }
+});
+
+// readability : the deeper we nest , tha harder it is to follow the logic 
+// error handling: every single level needs its own if(err) check . miss one and u have a silent failure. 
+// scalability: adding a fourth file means adding a fourth level of nesting.
+// maintainability: try explinig this code to a teammate. or to yourself 3 months from now . 
