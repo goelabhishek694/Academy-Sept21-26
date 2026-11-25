@@ -87,8 +87,8 @@ function simulateAsync(name, delay, shouldFail = false) {
 
 //     const retriedData = await retryMechanism(failureArr);
 //     console.log(retriedData);
-    
-    
+
+
 
 //     console.log("All Done");
 //     console.log(results);
@@ -199,19 +199,105 @@ function simulateAsync(name, delay, shouldFail = false) {
 
 // demoAny_FastestFails();
 
-async function demoAny_AllFastestFails(){
-    console.log("--- Promise.any: All Fastest Fails ---");
-    try{
-        const result = await Promise.any([
-            simulateAsync("slow server", 3000, true),
-            simulateAsync("medium server", 2000, true),
-            simulateAsync("fast server", 1000, true),
-        ]);
-        console.log("Winner: ", result);
-    }catch(err){
-        console.log(err);
+// async function demoAny_AllFastestFails() {
+//     console.log("--- Promise.any: All Fastest Fails ---");
+//     try {
+//         const result = await Promise.any([
+//             simulateAsync("slow server", 3000, true),
+//             simulateAsync("medium server", 2000, true),
+//             simulateAsync("fast server", 1000, true),
+//         ]);
+//         console.log("Winner: ", result);
+//     } catch (err) {
+//         console.log(err);
+//     }
+// }
+
+// demoAny_AllFastestFails();
+
+
+// function withTimeout(promise, ms) {
+//     const timeout = new Promise(function (resolve, reject) {
+//         setTimeout(function () {
+//             reject(new Error(`Operation timed out after ${ms}ms`))
+//         }, ms);
+//     })
+//     return Promise.race([...promise, timeout])
+// }
+
+// async function demoTimeout() {
+//     console.log("--- Timeout Pattern ---");
+
+//     //Case 1: operation is fast enough
+//     try {
+//         const result = await withTimeout([simulateAsync("fast read", 1000), simulateAsync("med read", 1500)], 2000) //2 sec deadline
+//         console.log("Case1 :", result);
+
+//     } catch (err) {
+//         console.log("Case1 error: ", err);
+//     }
+
+//     //Case 2: operation is too slow
+//     try {
+//         const result = await withTimeout([simulateAsync("fast read", 1000), simulateAsync("med read", 1500)], 500) //0.5 sec deadline
+//         console.log("Case2 :", result);
+//     } catch (err) {
+//         console.log("Case2 error: ", err);
+//     }
+// }
+
+// demoTimeout()
+
+
+
+//retry mechanism
+
+
+async function retry(fn, retries = 3, delay = 3000) {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+            console.log(`Attempt ${attempt} ...`);
+            const result = await fn();
+            console.log(`Succeeded on attempt ${attempt}`);
+            console.log(result);
+            return result;
+        } catch (err) {
+            console.log(`Attempt ${attempt} failed...`);
+            if (attempt == retries) {
+                throw new Error(`Failed after ${retries} attempts. last error: ${err.message}`);
+            }
+            console.log(`Waiting for ${delay}ms before retry...`);
+            await new Promise(function (resolve, reject) {
+                setTimeout(function () {
+                    resolve("hello");
+                }, delay);
+            })
+
+        }
     }
 }
 
-demoAny_AllFastestFails();
+function createDemoFn(){
+    let callCount =0;
+    return function(){
+        callCount++;
+        if(callCount<=2){
+            return simulateAsync(`Call-${callCount}`, 300, true); //fail
+        }
+        return simulateAsync(`Call-${callCount}`, 300); //succeed
+    };
+}
 
+async function demoRetry(){
+    console.log("----Retry Pattern------");
+    const flakyOpn = createDemoFn();
+
+    try{
+        const result = await retry(flakyOpn, 5, 3000);
+        console.log("Final result: ", result);
+    }catch(err){
+        console.log("Gave up: ", err.message);
+    }
+}
+
+demoRetry();
