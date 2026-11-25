@@ -301,3 +301,7 @@ async function demoRetry(){
 }
 
 demoRetry();
+
+
+//AI Prompt
+// I just learned about Promise.all, Promise.allSettled, Promise.race, and Promise.any. Give me a real-world scenario and ask me which combinator to use. Do not give me the answer yet. After I answer, tell me if I am right and explain why.
