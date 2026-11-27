@@ -46,6 +46,7 @@
         <div class="comment-actions">
             <button class="reply-btn">Reply</button>
             <button class="toggle-btn">Show/Hide</button>
+            <button class="delete-btn">Delete</button>
         </div>
         <div class="reply-input">
             <textarea class="reply-textarea" placeholder="Write a reply..."></textarea>
@@ -68,6 +69,54 @@
         commentsContainer.appendChild(comment);
         commentInput.value = "";
     })
+
+    commentsContainer.addEventListener("click", function(e){
+        let ele = e.target;
+        if(ele.classList.contains("reply-btn")){
+            handleReply(ele);
+        }
+        if(ele.classList.contains("toggle-btn")){
+            handleShowHide(ele);
+        } 
+        if(ele.classList.contains("submit-reply-btn")){
+            handleSubmitReply(ele);
+        } 
+    });
+
+    function handleShowHide(ele){
+        const comment = ele.closest(".comment");
+        const repliesContainer = comment.querySelector(".replies-container");
+        repliesContainer.classList.toggle("collapsed");
+    }
+
+    function handleSubmitReply(ele){
+        const comment = ele.closest(".comment");
+        const replyInput = comment.querySelector(".reply-input");
+        const textArea = replyInput.children[0];
+        const text = textArea.value.trim();
+
+        if(!text) return;
+
+        const repliesContainer = comment.querySelector(".replies-container");
+        const replyComment = createCommentElement(text);
+
+        repliesContainer.appendChild(replyComment);
+        textArea.value ="";
+        replyInput.style.display = "none";
+
+    }
+
+    function handleReply(ele){
+        var comment = ele.closest(".comment");
+        var replyInput = comment.querySelector(".reply-input");
+        if(replyInput.style.display == "block"){
+            replyInput.style.display = "none";
+        }else{
+            replyInput.style.display = "block";
+        }  
+    }
+
+
 
 
     function createCommentElement(text){
@@ -129,4 +178,14 @@
 
 
 
+<!-- 
+Question: What is the difference between the structure of a top-level comment and a reply?
+
+Question: Why is the replies container part of every comment, even when it starts empty?
+
+Question: Why does the delegated listener continue to work for comments created later?
+
+Question: What role does closest(.comment) play in scoping an action to the correct comment?
+
+Question: Where would you add a Delete action, and what should it remove? -->
 
