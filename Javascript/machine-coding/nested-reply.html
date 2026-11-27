@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .comment {
+            border-left: 2px solid #ddd;
+            padding-left: 16px;
+            margin-top: 12px;
+        }
+
+        .comment-text {
+            margin: 0 0 6px;
+        }
+
+        .comment-actions button {
+            margin-right: 8px;
+        }
+
+        .reply-input {
+            display: none;
+            margin-top: 8px;
+        }
+
+        .replies-container {
+            margin-top: 8px;
+        }
+
+        .collapsed {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Nested Comments</h1>
+<div class="add-comment">
+    <textarea id="comment-input" placeholder="Write a comment..."></textarea>
+    <button id="add-comment-btn">Add Comment</button>
+</div>
+
+<div id="comments-container">
+    <!-- <div class="comment">
+        <p class="comment-text">This is a sample comment.</p>
+        <div class="comment-actions">
+            <button class="reply-btn">Reply</button>
+            <button class="toggle-btn">Show/Hide</button>
+        </div>
+        <div class="reply-input">
+            <textarea class="reply-textarea" placeholder="Write a reply..."></textarea>
+            <button class="submit-reply-btn">Submit Reply</button>
+        </div>
+        <div class="replies-container">
+            
+        </div>
+    </div> -->
+</div>
+<script>
+
+    const commentInput = document.getElementById("comment-input");
+    const addCommentBtn = document.getElementById("add-comment-btn");
+    const commentsContainer = document.getElementById("comments-container");
+
+    addCommentBtn.addEventListener("click", function(){
+        let text = commentInput.value;
+        const comment = createCommentElement(text);
+        commentsContainer.appendChild(comment);
+        commentInput.value = "";
+    })
+
+
+    function createCommentElement(text){
+        var comment = document.createElement("div");
+        comment.classList.add("comment");
+
+        var commentText = document.createElement("p");
+        commentText.classList.add("comment-text");
+        commentText.textContent = text;
+
+        var actions = document.createElement("div");
+        actions.classList.add("comment-actions");
+
+        var replyBtn = document.createElement("button");
+        replyBtn.classList.add("reply-btn");
+        replyBtn.textContent = "Reply";
+
+        var toggleBtn = document.createElement("button");
+        toggleBtn.classList.add("toggle-btn");
+        toggleBtn.textContent = "Show/Hide";
+        
+        actions.appendChild(replyBtn);
+        actions.appendChild(toggleBtn);
+        
+        
+        var replyInput = document.createElement("div");
+        replyInput.classList.add("reply-input");
+        
+        var textarea = document.createElement("textarea");
+        textarea.classList.add("reply-textarea");
+        textarea.placeholder = "Write a reply...";
+        
+        var submitReplyBtn = document.createElement("button");
+        submitReplyBtn.classList.add("submit-reply-btn");
+        submitReplyBtn.textContent = "Submit Reply";
+        
+        replyInput.appendChild(textarea);
+        replyInput.appendChild(submitReplyBtn);
+        
+        var repliesContainer = document.createElement("div");
+        repliesContainer.classList.add("replies-container");
+        
+        
+        comment.appendChild(commentText);
+        comment.appendChild(actions);
+        comment.appendChild(replyInput);
+        comment.appendChild(repliesContainer);
+
+        return comment;
+    }
+
+
+    //wjdeew
+
+</script>
+</body>
+</html>
+
+
+
+
+

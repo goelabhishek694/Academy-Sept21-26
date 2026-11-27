@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .active{
+            background-color: yellow;
+        }
+    </style>
+</head>
+<body>
+    <div class="rating">
+        <span class="star" data-value="1">&#9733;</span>
+        <span class="star" data-value="2">&#9733;</span>
+        <span class="star" data-value="3">&#9733;</span>
+        <span class="star" data-value="4">&#9733;</span>
+        <span class="star" data-value="5">&#9733;</span>
+    </div>
+    <script>
+        const ratingContainer = document.querySelector(".rating");
+        const stars = document.querySelectorAll(".star");
+
+        ratingContainer.addEventListener("click", function(e){
+            let ele = e.target;
+            if(!ele.classList.contains("star")) return ;
+            let clickedValue = Number(ele.dataset.value);
+
+            stars.forEach(function(star){
+                if(Number(star.dataset.value)<=clickedValue){
+                    star.classList.add("active");
+                }else{
+                    star.classList.remove("active");
+                }
+            })
+        })
+    </script>
+</body>
+</html>
